@@ -89,12 +89,12 @@ check_branch([receive_process(A,[Lambda-P])],A,Lambda,[[Lambda-P]]).
 check_branch([receive_process(A,[Lambda-P])|Ps],A,Lambda,[[Lambda-P]|Res]) :-
 	check_branch(Ps,A,Lambda,Res).
 
-check_each_context(Context,A,[Lambda|Lambdas],[P|Ps],[]) :-
+check_each_context(Context,A,[_|Lambdas],[P|Ps],[]) :-
 	process(Context),	
 	fill_context(Context,[],P),
-	check_each_context(Context,A,Lambdas,Ps,FillingsTail).
+	check_each_context(Context,A,Lambdas,Ps,_).
 
-check_each_context(Context,A,[Lambda],[P],[]) :-
+check_each_context(Context,_,[_],[P],[]) :-
 	process(Context),	
 	fill_context(Context,[],P).
 
@@ -257,22 +257,22 @@ check_queue_children([_-G|LGs],A,B,Zeta) :-
 	check_queue(G,A,B,Zeta),
 	check_queue_children(LGs,A,B,Zeta).
 
-check_queue_children([_-G|LGs],A,B,Zeta) :-
+check_queue_children([_-G|_],A,B,Zeta) :-
 	check_queue(G,A,B,Zeta).
 
-check_queue(end,_,_,[Lambda|Lambdas]).
+check_queue(end,_,_,[_|_]).
 
 check_queue(input_type(A,B,Lambda,G),A,B,[Lambda|Zeta]) :-
 	check_queue(G,A,B,Zeta).
 
-check_queue(input_type(A,B,Lambda1,G),A,B,[Lambda2|_]) :-
+check_queue(input_type(A,B,Lambda1,_),A,B,[Lambda2|_]) :-
 	Lambda1 \= Lambda2.
 	
-check_queue(input_type(A,B,L,G),C,D,Zeta) :-
+check_queue(input_type(A,B,_,G),C,D,Zeta) :-
 	(A \= C ; B \= D),
 	check_queue(G,C,D,Zeta).
 
-check_queue(output_type(C,D,LGs),A,B,Zeta) :-
+check_queue(output_type(_,_,LGs),A,B,Zeta) :-
 	check_queue_children(LGs,A,B,Zeta),!.
 
 
@@ -335,7 +335,7 @@ projection_loop_detect(GPM_found,output_type(A,B,[Lambda1-G1,Lambda2-G2|Gs]),M, 
 	projection_list(GPM_found_modified,A,B,M,[Lambda1-G1,Lambda2-G2|Gs],C,[Lambda1-P1,Lambda2-P2|P_projected]),!,
 	build_context(P1,P2,R,Lambda1_first,Lambda2_first,Context,_,_),
 	pairs_values(P_projected,Ps),
-	check_each_context(Context,R,[Lambda1_first,Lambda2_first|Lambdas],[P1,P2|Ps],Fillings),!,
+	check_each_context(Context,R,[Lambda1_first,Lambda2_first|_],[P1,P2|Ps],Fillings),!,
 	build_new_node_context(Context,Fillings,R,P).
 
 
@@ -373,10 +373,10 @@ queue([A-B-Lambdas|M]) :-
 	map_from_to(pair_labels,label_list,[A-B-Lambdas|M]).
 
 network([A-P,B-Q|APs]-M) :-
-	map_from_to(participant_name,process,[A-P,B-Q|APs]).
+	map_from_to(participant_name,process,[A-P,B-Q|APs]),
 	queue(M).
 
-process_preorder_list([Lambda-P],LQs,Lambdas) :-
+process_preorder_list([Lambda-_],_,Lambdas) :-
 	\+member(Lambda,Lambdas).
 
 process_preorder_list([Lambda-P],LQs,Lambdas) :-
@@ -384,15 +384,15 @@ process_preorder_list([Lambda-P],LQs,Lambdas) :-
 	pairs_keys_values(LQs,[Lambda],[Q]),
 	process_preorder(P,Q).
 	
-process_preorder_list([Lambda-P|LPs],LQs,Lambdas) :-
+process_preorder_list([Lambda-_|LPs],LQs,Lambdas) :-
 	\+member(Lambda,Lambdas),
-	process_preorder_list(LPs,LQs,Index).
+	process_preorder_list(LPs,LQs,_).
 
 process_preorder_list([Lambda-P|LPs],LQs,Lambdas) :-
 	member(Lambda,Lambdas),
 	pairs_keys_values(LQs,[Lambda],[Q]),
 	process_preorder(P,Q),
-	process_preorder_list(LPs,LQs,Index).
+	process_preorder_list(LPs,LQs,_).
 
 process_preorder(zero,zero).
 
@@ -400,7 +400,7 @@ process_preorder(receive_process(A,[Lambda-P|LPs]),receive_process(A,[Lambda-Q|L
 	pairs_keys([Lambda-P|LPs],L1s),
 	pairs_keys([Lambda-Q|LQs],L2s),
 	subset(L1s,L2s),
-	process_preorder_list([Lambda-P|LPS],[Lambda-Q|LQs],L2s).
+	process_preorder_list([Lambda-P|LPs],[Lambda-Q|LQs],L2s).
 	
 process_preorder(send_process(A,[Lambda-P|LPs]),send_process(A,[Lambda-Q|LQs])) :-
 	pairs_keys([Lambda-P|LPs],L1s),
@@ -414,7 +414,7 @@ participants(output_type(A,B,[Lambda-G|LGs]),Res) :-
 	union([B],As_whith_A,As_with_A_and_B),
 	permutation(As_with_A_and_B,Res).
 
-participants(input_type(A,B,L,G),Res) :-
+participants(input_type(A,B,_,G),Res) :-
 	participants(G,As),
 	union([A],As,As_whith_A),
 	union([B],As_whith_A,As_with_A_and_B),
@@ -422,13 +422,13 @@ participants(input_type(A,B,L,G),Res) :-
 	
 participants(end,[]).
 
-participants(end,[A|As]).
+participants(end,[_|_]).
 
 
-participants_list([Lambda-G],As) :-
+participants_list([_-G],As) :-
 	participants(G,As).
 
-participants_list([Lambda-G|LGs],As3) :-
+participants_list([_-G|LGs],As3) :-
 	participants(G,As1),
 	participants_list(LGs,As2),
 	union(As1,As2,As3).
@@ -456,4 +456,5 @@ fair(G) :-
 fair_list(_,[]).
 
 fair_list(G,[A|As]) :-
-	all_finite_depth(G,A).
+	all_finite_depth(G,A),
+	fair_list(G,As).
