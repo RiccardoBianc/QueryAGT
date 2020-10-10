@@ -1,4 +1,4 @@
-# Prolog-implementation-of-asynchronous-coinductive-global-types-
+# Asynchronous-global-types-implementation
 The project is implemented with SWI-Prolog version 8.0.3 and 64 bits.
 The code is based on libraries
 * coinduction
