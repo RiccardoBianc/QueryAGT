@@ -4,11 +4,11 @@
 :- coinductive process/1.
 :- coinductive not_player_list/2.
 :- coinductive not_player/2.
-:- coinductive build_new_node_context/4.
+:- coinductive build_process_result/4.
 :- coinductive all_finite_depth/2.
 :- coinductive all_finite_depth_list/2.
-:- coinductive build_process_result/8.
-:- coinductive build_process_result_list/8.
+:- coinductive build_context/8.
+:- coinductive build_context_list/8.
 :- coinductive check_queue/4.
 :- coinductive check_queue_children/4.
 :- coinductive participants/2.
@@ -118,25 +118,24 @@ change_shape([[LP]|LPs_single],[Head|LPs_multi],[[LP|Head]|LPs_All]) :-
 	change_shape(LPs_single,LPs_multi,LPs_All).
 
 %--------------------------------------------------------------------------------------------------------------------------------
-build_process_result_list([L-P1],[L-P2],A,Lambda1,Lambda2,[L-Context],Res1,Res2) :- 
-	build_process_result(P1,P2,A,Lambda1,Lambda2,Context,Res1,Res2).
+build_context_list([L-P1],[L-P2],A,Lambda1,Lambda2,[L-Context],Res1,Res2) :- 
+	build_context(P1,P2,A,Lambda1,Lambda2,Context,Res1,Res2).
 
-build_process_result_list([L-P1|LP1s],[L-P2|LP2s],A,Lambda1,Lambda2,[L-Context|Contexts],Res1,Res2) :-
-	build_process_result(P1,P2,A,Lambda1,Lambda2,Context,Res11,Res21),
-	build_process_result_list(LP1s,LP2s,A,Lambda1,Lambda2,Contexts,Res12,Res22),
+build_context_list([L-P1|LP1s],[L-P2|LP2s],A,Lambda1,Lambda2,[L-Context|Contexts],Res1,Res2) :-
+	build_context(P1,P2,A,Lambda1,Lambda2,Context,Res11,Res21),
+	build_context_list(LP1s,LP2s,A,Lambda1,Lambda2,Contexts,Res12,Res22),
 	append(Res11,Res12,Res1),append(Res21,Res22,Res2).
 
-build_process_result(zero,zero,_,_,_,zero,[],[]).
+build_context(zero,zero,_,_,_,zero,[],[]).
 
-build_process_result(receive_process(B,LP1),receive_process(B,LP2),A,Lambda1,Lambda2,receive_process(B,Context),Res1,Res2) :- 
-	build_process_result_list(LP1,LP2,A,Lambda1,Lambda2,Context,Res1,Res2).
+build_context(receive_process(B,LP1),receive_process(B,LP2),A,Lambda1,Lambda2,receive_process(B,Context),Res1,Res2) :- 
+  build_context_list(LP1,LP2,A,Lambda1,Lambda2,Context,Res1,Res2).
 
-build_process_result(receive_process(A,[Lambda1-P1]),receive_process(A,[Lambda2-P2]),A,Lambda1,Lambda2,hole,[Lambda1-P1],[Lambda2-P2]) :-
-	Lambda1 \= Lambda2.
+build_context(receive_process(A,[Lambda1-P1]),receive_process(A,[Lambda2-P2]), A,Lambda1,Lambda2,hole,[Lambda1-P1],[Lambda2-P2]) :-
+  Lambda1 \= Lambda2.
 
-build_process_result(send_process(B,LP1),send_process(B,LP2),A,Lambda1,Lambda2,send_process(B,Context),Res1,Res2) :-
-	build_process_result_list(LP1,LP2,A,Lambda1,Lambda2,Context,Res1,Res2).
-
+build_context(send_process(B,LP1),send_process(B,LP2),A,Lambda1,Lambda2,send_process(B,Context),Res1,Res2) :-
+  build_context_list(LP1,LP2,A,Lambda1,Lambda2,Context,Res1,Res2).
 %--------------------------------------------------------------------------------------------------------------------------------
 
 /*
@@ -178,11 +177,11 @@ process(receive_process(A,[Lambda-P|LPs])) :-
 %--------------------------------------------------------------------------------------------------------------------------------
 
 all_finite_depth(output_type(A,B,LGs),C) :-
-	finite_depth_list(output_type(A,B,LGs),C,[]),
+	finite_depth(output_type(A,B,LGs),C,[]),
 	all_finite_depth_list(LGs,C).
 
 all_finite_depth(input_type(A,B,Lambda,G),C) :- 
-	finite_depth_list(input_type(A,B,Lambda,G),C,[]),
+	finite_depth(input_type(A,B,Lambda,G),C,[]),
 	all_finite_depth(G,C).
 
 all_finite_depth(end,_).
@@ -195,7 +194,7 @@ all_finite_depth_list([_-G|LGs],A) :-
 	all_finite_depth_list(LGs,A).
 
 %--------------------------------------------------------------------------------------------------------------------------------
-finite_depth_list([_-G],A,G_found) :- 
+finite_depth_list([_-G],A,G_found) :-
 	finite_depth(G,A,G_found).
 
 finite_depth_list([_-G|LGs],A,G_found) :-
@@ -225,7 +224,7 @@ add_receive([LPs],A,[receive_process(A,LPs)]).
 add_receive([LPs|Lpss],A,[receive_process(A,LPs)|Ps]) :-
 	add_receive(Lpss,A,Ps).
 
-build_new_node_context(Context,Fills,A,P) :-
+build_process_result(Context,Fills,A,P) :-
 	add_receive(Fills,A,Fills_with_receive),
 	fill_context(Context,Fills_with_receive,P).
 
@@ -280,7 +279,7 @@ check_queue(output_type(_,_,LGs),A,B,Zeta) :-
 check_queue_list([Lambda-G],A,B,M) :- 
 	add_to_queue(A,B,Lambda,M,M1),
 	get_assoc(A-B,M1,Lambdas),
-	check_queue(G,A,B,Lambdas).	
+	check_queue(G,A,B,Lambdas).
 	
 check_queue_list([Lambda-G|LGs],A,B,M) :-
 	add_to_queue(A,B,Lambda,M,M1),
@@ -325,26 +324,25 @@ projection_cycle_detect(GPM_found,output_type(A,B,[Lambda1-G1,Lambda2-G2|LGs]),M
   check_each_process(Context,A,[Lambda1,Lambda2|Lambdas],[P1,P2|Ps],Fillings),
   build_process_result(Context,Fillings,A,P).
   
-projection_cycle_detect(GPM_found,output_type(A,B,LGs),M, A, send_process(B,P_children)) :-
-	add_if_not_present(GPM_found,output_type(A,B,LGs),send_process(B,P_children),M,GPM_found_modified),
-	\+check_queue_list(LGs,A,B,M),
-	projection_list(GPM_found_modified,A,B,M,LGs,A,P_children),!.
+projection_cycle_detect(GPM_found,output_type(A,B,LGs),M, A,send_process(B,P_children)) :-
+  add_if_not_present(GPM_found,output_type(A,B,LGs),send_process(B,P_children),M,GPM_found_modified),
+  \+check_queue_list(LGs,A,B,M),
+  projection_list(GPM_found_modified,A,B,M,LGs,A,P_children),!.
 
-projection_cycle_detect(GPM_found,output_type(A,B,[Lambda1-G1,Lambda2-G2|Gs]),M, C, P):-
+projection_cycle_detect(GPM_found,output_type(A,B,[Lambda1-G1,Lambda2-G2|LGs]),M,C, P):-
 	A\=C, B\=C,
-	add_if_not_present(GPM_found,output_type(A,B,[Lambda1-G1,Lambda2-G2|Gs]),P,M,GPM_found_modified),
-	player(output_type(A,B,[Lambda1-G1,Lambda2-G2|Gs]),C),
-	projection_list(GPM_found_modified,A,B,M,[Lambda1-G1,Lambda2-G2|Gs],C,[Lambda1-P1,Lambda2-P2|P_projected]),!,
-	build_process_result(P1,P2,R,Lambda1_first,Lambda2_first,Context,_,_),
-	pairs_values(P_projected,Ps),
-	check_each_process(Context,R,[Lambda1_first,Lambda2_first|_],[P1,P2|Ps],Fillings),!,
-	build_new_node_context(Context,Fillings,R,P).
-
+	add_if_not_present(GPM_found,output_type(A,B,[Lambda1-G1,Lambda2-G2|LGs]),P,M,GPM_found_modified),
+	player(output_type(A,B,[Lambda1-G1,Lambda2-G2|LGs]),C),
+	projection_list(GPM_found_modified,A,B,M,[Lambda1-G1,Lambda2-G2|LGs],C,[Lambda1-P1,Lambda2-P2|LPs]),!,
+	build_context(P1,P2,R,Lambda1_prime,Lambda2_prime,Context,_,_),
+	pairs_values(LPs,Ps),
+	check_each_process(Context,R,[Lambda1_prime,Lambda2_prime|_],[P1,P2|Ps],Fillings),
+	build_process_result(Context,Fillings,R,P).
 
 projection_cycle_detect(GPM_found,input_type(A,B,Lambda,G_children),M,B,receive_process(A,[Lambda-P_children])) :- 
-	add_if_not_present(GPM_found,input_type(A,B,Lambda,G_children),receive_process(A,[Lambda-P_children]),M,GPM_found_modified),
-	remove_from_queue(M,A,B,Lambda,M1),!,
-	projection_cycle_detect(GPM_found_modified,G_children,M1,B,P_children),!.
+  add_if_not_present(GPM_found,input_type(A,B,Lambda,G_children),receive_process(A,[Lambda-P_children]),M,GPM_found_modified),
+  remove_from_queue(M,A,B,Lambda,M1),!,
+  projection_cycle_detect(GPM_found_modified,G_children,M1,B,P_children),!.
 
 projection_cycle_detect(GPM_found,input_type(A,B,Lambda,Gs),M,C,P) :-
 	C\=B,!,
@@ -352,7 +350,6 @@ projection_cycle_detect(GPM_found,input_type(A,B,Lambda,Gs),M,C,P) :-
 	player(input_type(A,B,Lambda,Gs),C),
 	remove_from_queue(M,A,B,Lambda,M1),!,
 	projection_cycle_detect(GPM_found_modified,Gs,M1,C,P).
-
 %--------------------------------------------------------------------------------------------------------------------------------
 
 projection(G,M,A,P) :- 
@@ -369,8 +366,8 @@ label_list(Lambdas) :-
 %--------------------------------------------------------------------------------------------------------------------------------
 
 participant_pair(A-B) :-
-	participant(A),
-	participant(B).
+	participant_name(A),
+	participant_name(B).
 
 %--------------------------------------------------------------------------------------------------------------------------------
 
@@ -382,18 +379,18 @@ queue([A-B-Lambdas|M]) :-
 %--------------------------------------------------------------------------------------------------------------------------------
 
 network([A1-P1,A2-P2|APs]-M) :- 
-	map_from_to(participant,process,[A1-P1,A2-P2|APs])
+	map_from_to(participant_name,process,[A1-P1,A2-P2|APs]),
 	queue(M).
 
 %--------------------------------------------------------------------------------------------------------------------------------	
-
-process_preorder_list([Lambda-_],_,Lambdas) :-
-	\+member(Lambda,Lambdas).
 
 process_preorder_list([Lambda-P],LQs,Lambdas) :-
 	member(Lambda,Lambdas),
 	pairs_keys_values(LQs,[Lambda],[Q]),
 	process_preorder(P,Q).
+
+process_preorder_list([Lambda-_],_,Lambdas) :-
+	\+member(Lambda,Lambdas).
 	
 process_preorder_list([Lambda-_|LPs],LQs,Lambdas) :-
 	\+member(Lambda,Lambdas),
@@ -407,19 +404,19 @@ process_preorder_list([Lambda-P|LPs],LQs,Lambdas) :-
 
 %--------------------------------------------------------------------------------------------------------------------------------
 
-process_preorder(zero,zero).
-
-process_preorder(receive_process(A,[Lambda-P|LPs]),receive_process(A,[Lambda-Q|LQs])) :- 
-	pairs_keys([Lambda-P|LPs],L1s),
-	pairs_keys([Lambda-Q|LQs],L2s),
-	subset(L1s,L2s),
-	process_preorder_list([Lambda-P|LPs],[Lambda-Q|LQs],L2s).
-	
 process_preorder(send_process(A,[Lambda-P|LPs]),send_process(A,[Lambda-Q|LQs])) :-
-	pairs_keys([Lambda-P|LPs],L1s),
-	pairs_keys([Lambda-Q|LQs],L2s),
-	subset(L2s,L1s),
-	process_preorder_list([Lambda-P|LPs],[Lambda-Q|LQs],L1s).
+  pairs_keys([Lambda-P|LPs],L1s),
+  pairs_keys([Lambda-Q|LQs],L2s),
+  subset(L2s,L1s),
+  process_preorder_list([Lambda-P|LPs],[Lambda-Q|LQs],L1s).
+  
+process_preorder(receive_process(A,[Lambda-P|LPs]),receive_process(A,[Lambda-Q|LQs])) :- 
+  pairs_keys([Lambda-P|LPs],L1s),
+  pairs_keys([Lambda-Q|LQs],L2s),
+  subset(L1s,L2s),
+  process_preorder_list([Lambda-P|LPs],[Lambda-Q|LQs],L2s).
+	
+process_preorder(zero,zero).
 
 %--------------------------------------------------------------------------------------------------------------------------------
 
@@ -429,7 +426,7 @@ participants(output_type(A,B,[Lambda-G|LGs]),Res) :-
 	union([B],As_whith_A,As_with_A_and_B),
 	permutation(As_with_A_and_B,Res).
 
-participants(input_type(A,B,L,G),Res) :-
+participants(input_type(A,B,_,G),Res) :-
 	participants(G,As),
 	union([A],As,As_whith_A),
 	union([B],As_whith_A,As_with_A_and_B),
@@ -437,17 +434,22 @@ participants(input_type(A,B,L,G),Res) :-
 	
 participants(end,[]).
 
-participants(end,[A|As]).
+participants(end,[_|_]).
 
-participants_list([Lambda-G],As) :-
+participants_list([_-G],As) :-
 	participants(G,As).
 
-participants_list([Lambda-G|LGs],As3) :-
+participants_list([_-G|LGs],As3) :-
 	participants(G,As1),
 	participants_list(LGs,As2),
 	union(As1,As2,As3).
 
 %--------------------------------------------------------------------------------------------------------------------------------
+
+typing([A-P,B-Q|APs]-M,G-M) :-
+	project_net([A-P,B-Q|APs],G,M),
+	pairs_keys([A-P,B-Q|APs],As),
+	participants(G,As).
 
 project_net([A-P],G,M) :-
 	projection(G,M,A,P_first),
@@ -457,13 +459,6 @@ project_net([A-P|APs],G,M) :-
 	projection(G,M,A,P_first),
 	process_preorder(P,P_first),
 	project_net(APs,G,M).
-	
-%--------------------------------------------------------------------------------------------------------------------------------
-	
-typing([A-P,B-Q|APs]-M,G-M) :-
-	project_net([A-P,B-Q|APs],G,M),
-	pairs_keys([A-P,B-Q|APs],As),
-	participants(G,As).
 	
 %--------------------------------------------------------------------------------------------------------------------------------	
 	

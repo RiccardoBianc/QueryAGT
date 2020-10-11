@@ -236,30 +236,30 @@ test(same_process) :- P1 = send_process("A",["lambda"-P1]),
 :- end_tests(build_context).
 
  
-:- begin_tests(check_each_context).
+:- begin_tests(check_each_process).
 
 test(one_substition_zero) :- 
 				Context = send_process("A",["lambda"-hole]),
-				check_each_context(Context,"A",["lambda"],[send_process("A",["lambda"-receive_process("A",["lambda"-zero])])],Res),
+				check_each_process(Context,"A",["lambda"],[send_process("A",["lambda"-receive_process("A",["lambda"-zero])])],Res),
 				Res = [["lambda"-zero]].			
 	 
 test(one_substition_non_zero) :- Context = send_process("A",["lambda"-receive_process("A",["lambda"-hole])]),
-				check_each_context(Context,"A",["lambda"],[send_process("A",["lambda"-receive_process("A",["lambda"-receive_process("A",["lambda"-zero])])])],Res),
+				check_each_process(Context,"A",["lambda"],[send_process("A",["lambda"-receive_process("A",["lambda"-receive_process("A",["lambda"-zero])])])],Res),
 				Res = [["lambda"-zero]].
 
 test(more_holes) :-  Context = send_process("A",["lambda"-receive_process("A",["lambda"-hole]),"lambda2"-								receive_process("A",["lambda"-hole])]),
-					check_each_context(Context,"A",["lambda"],[send_process("A",["lambda"-receive_process("A",["lambda"-receive_process("A",["lambda"-zero])]),"lambda2"-receive_process("A",["lambda"-receive_process("A",["lambda"-send_process("A",["ll"-zero])])])])],Res),
+					check_each_process(Context,"A",["lambda"],[send_process("A",["lambda"-receive_process("A",["lambda"-receive_process("A",["lambda"-zero])]),"lambda2"-receive_process("A",["lambda"-receive_process("A",["lambda"-send_process("A",["ll"-zero])])])])],Res),
 					Res = [["lambda"-zero],["lambda"-send_process("A",["ll"-zero])]].
 
 test(more_branches) :- Context = receive_process("A",["lambda"-hole]),
-				check_each_context(Context,"A",["lambda","lambda2"],[receive_process("A",["lambda"-receive_process("A",["lambda"-zero])]),receive_process("A",["lambda"-receive_process("A",["lambda2"-zero])])],Res),
+				check_each_process(Context,"A",["lambda","lambda2"],[receive_process("A",["lambda"-receive_process("A",["lambda"-zero])]),receive_process("A",["lambda"-receive_process("A",["lambda2"-zero])])],Res),
 				Res = [["lambda"-zero,"lambda2"-zero]].
 	
 test(more_branches_more_holes) :- Context = receive_process("A",["lambda"-hole,"lambda2"-hole]),
-								check_each_context(Context,"A",["lambda","lambda2"],[receive_process("A",["lambda"-receive_process("A",["lambda"-zero]),"lambda2"-receive_process("A",["lambda"-zero])]),receive_process("A",["lambda"-receive_process("A",["lambda2"-zero]),"lambda2"-receive_process("A",["lambda2"-zero])])],Res),
+								check_each_process(Context,"A",["lambda","lambda2"],[receive_process("A",["lambda"-receive_process("A",["lambda"-zero]),"lambda2"-receive_process("A",["lambda"-zero])]),receive_process("A",["lambda"-receive_process("A",["lambda2"-zero]),"lambda2"-receive_process("A",["lambda2"-zero])])],Res),
 								Res = [["lambda"-zero,"lambda2"-zero],["lambda"-zero,"lambda2"-zero]].
  
-:- end_tests(check_each_context).
+:- end_tests(check_each_process).
  
 :- begin_tests(is_network).
 
