@@ -99,18 +99,18 @@ check_each_process(Context,_,[_],[P],[]) :-
 	process(Context),	
 	fill_context(Context,[],P).
 
-check_each_process(Context,A,[Lambda],[P],Res) :-
+check_each_process(Context,A,[Lambda],[P],LPss) :-
 	\+(process(Context)),
 	fill_context(Context,Fillings,P),
-	check_branch(Fillings,A,Lambda,Res).
+	check_branch(Fillings,A,Lambda,LPss).
 
-check_each_process(Context,A,[Lambda|Lambdas],[P|Ps],Fill_for_each_hole) :-
+check_each_process(Context,A,[Lambda|Lambdas],[P|Ps],LPss) :-
 	\+(process(Context)),
 	fill_context(Context,Fillings,P),
 	check_branch(Fillings,A,Lambda,Res),
 	check_each_process(Context,A,Lambdas,Ps,FillingsTail),
 	\+member(Lambda,Lambdas),
-	change_shape(Res,FillingsTail,Fill_for_each_hole).
+	change_shape(Res,FillingsTail,LPss).
 
 change_shape([[LP]],[Head],[[LP|Head]]).
 
