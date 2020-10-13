@@ -127,11 +127,11 @@ build_context_list([L-P1|LP1s],[L-P2|LP2s],A,Lambda1,Lambda2,[L-Context|Contexts
 
 build_context(zero,zero,_,_,_,zero).
 
-build_context(receive_process(B,LP1),receive_process(B,LP2),A,Lambda1,Lambda2,receive_process(B,Context)) :- 
-  build_context_list(LP1,LP2,A,Lambda1,Lambda2,Context).
-
 build_context(receive_process(A,[Lambda1-_]),receive_process(A,[Lambda2-_]), A,Lambda1,Lambda2,hole) :-
   Lambda1 \= Lambda2.
+
+build_context(receive_process(B,LP1),receive_process(B,LP2),A,Lambda1,Lambda2,receive_process(B,Context)) :- 
+  build_context_list(LP1,LP2,A,Lambda1,Lambda2,Context).
 
 build_context(send_process(B,LP1),send_process(B,LP2),A,Lambda1,Lambda2,send_process(B,Context)) :-
   build_context_list(LP1,LP2,A,Lambda1,Lambda2,Context).
