@@ -225,13 +225,11 @@ test(more_holes) :- fill_context(send_process("A",["first"-hole,"second"-send_pr
 
 test(check_context_right) :- P1 = send_process("A",["L"-receive_process("B",["lambda"-zero]),"L"-send_process("B",["lambda"-receive_process("B",["lambda"-zero])])]),
 P2 = send_process("A",["L"-receive_process("B",["lambda1"-receive_process("B",["lambda"-zero])]),"L"-send_process("B",["lambda"-receive_process("B",["lambda1"-zero])])]),
-build_context(P1,P2,"B","lambda","lambda1",Context,Res1,Res2),
-Context = send_process("A",["L"-hole,"L"-send_process("B",["lambda"-hole])]),
-Res1 = ["lambda"-zero,"lambda"-zero],
-Res2 = ["lambda1"-receive_process("B",["lambda"-zero]),"lambda1"-zero].
+build_context(P1,P2,"B","lambda","lambda1",Context),
+Context = send_process("A",["L"-hole,"L"-send_process("B",["lambda"-hole])]).
 							 
 test(same_process) :- P1 = send_process("A",["lambda"-P1]),
-							build_context(P1,P1,"any","any","any",Context,[],[]),
+							build_context(P1,P1,"any","any","any",Context),
 							Context = send_process("A",["lambda"- Context]).
 :- end_tests(build_context).
 

@@ -7,8 +7,8 @@
 :- coinductive build_process_result/4.
 :- coinductive all_finite_depth/2.
 :- coinductive all_finite_depth_list/2.
-:- coinductive build_context/8.
-:- coinductive build_context_list/8.
+:- coinductive build_context/6.
+:- coinductive build_context_list/6.
 :- coinductive check_queue/4.
 :- coinductive check_queue_children/4.
 :- coinductive participants/2.
@@ -118,24 +118,23 @@ change_shape([[LP]|LPs_single],[Head|LPs_multi],[[LP|Head]|LPs_All]) :-
 	change_shape(LPs_single,LPs_multi,LPs_All).
 
 %--------------------------------------------------------------------------------------------------------------------------------
-build_context_list([L-P1],[L-P2],A,Lambda1,Lambda2,[L-Context],Res1,Res2) :- 
-	build_context(P1,P2,A,Lambda1,Lambda2,Context,Res1,Res2).
+build_context_list([L-P1],[L-P2],A,Lambda1,Lambda2,[L-Context]) :- 
+	build_context(P1,P2,A,Lambda1,Lambda2,Context).
 
-build_context_list([L-P1|LP1s],[L-P2|LP2s],A,Lambda1,Lambda2,[L-Context|Contexts],Res1,Res2) :-
-	build_context(P1,P2,A,Lambda1,Lambda2,Context,Res11,Res21),
-	build_context_list(LP1s,LP2s,A,Lambda1,Lambda2,Contexts,Res12,Res22),
-	append(Res11,Res12,Res1),append(Res21,Res22,Res2).
+build_context_list([L-P1|LP1s],[L-P2|LP2s],A,Lambda1,Lambda2,[L-Context|Contexts]) :-
+	build_context(P1,P2,A,Lambda1,Lambda2,Context),
+	build_context_list(LP1s,LP2s,A,Lambda1,Lambda2,Contexts).
 
-build_context(zero,zero,_,_,_,zero,[],[]).
+build_context(zero,zero,_,_,_,zero).
 
-build_context(receive_process(B,LP1),receive_process(B,LP2),A,Lambda1,Lambda2,receive_process(B,Context),Res1,Res2) :- 
-  build_context_list(LP1,LP2,A,Lambda1,Lambda2,Context,Res1,Res2).
+build_context(receive_process(B,LP1),receive_process(B,LP2),A,Lambda1,Lambda2,receive_process(B,Context)) :- 
+  build_context_list(LP1,LP2,A,Lambda1,Lambda2,Context).
 
-build_context(receive_process(A,[Lambda1-P1]),receive_process(A,[Lambda2-P2]), A,Lambda1,Lambda2,hole,[Lambda1-P1],[Lambda2-P2]) :-
+build_context(receive_process(A,[Lambda1-_]),receive_process(A,[Lambda2-_]), A,Lambda1,Lambda2,hole) :-
   Lambda1 \= Lambda2.
 
-build_context(send_process(B,LP1),send_process(B,LP2),A,Lambda1,Lambda2,send_process(B,Context),Res1,Res2) :-
-  build_context_list(LP1,LP2,A,Lambda1,Lambda2,Context,Res1,Res2).
+build_context(send_process(B,LP1),send_process(B,LP2),A,Lambda1,Lambda2,send_process(B,Context)) :-
+  build_context_list(LP1,LP2,A,Lambda1,Lambda2,Context).
 %--------------------------------------------------------------------------------------------------------------------------------
 
 /*
@@ -318,7 +317,7 @@ projection_cycle_detect(GPM_found,
 projection_cycle_detect(GPM_found,output_type(A,B,[Lambda1-G1,Lambda2-G2|LGs]),M,B,P) :-
   add_if_not_present(GPM_found,output_type(A,B,[Lambda1-G1,Lambda2-G2|LGs]),P,M,GPM_found_modified),
   projection_list(GPM_found_modified,A,B,M,[Lambda1-G1,Lambda2-G2|LGs],B,[Lambda1-P1,Lambda2-P2|LPs]),!,
-  build_context(P1,P2,A,Lambda1,Lambda2,Context,_,_),
+  build_context(P1,P2,A,Lambda1,Lambda2,Context),
   pairs_keys(LGs,Lambdas),
   pairs_values(LPs,Ps),
   check_each_process(Context,A,[Lambda1,Lambda2|Lambdas],[P1,P2|Ps],Fillings),
@@ -334,7 +333,7 @@ projection_cycle_detect(GPM_found,output_type(A,B,[Lambda1-G1,Lambda2-G2|LGs]),M
 	add_if_not_present(GPM_found,output_type(A,B,[Lambda1-G1,Lambda2-G2|LGs]),P,M,GPM_found_modified),
 	player(output_type(A,B,[Lambda1-G1,Lambda2-G2|LGs]),C),
 	projection_list(GPM_found_modified,A,B,M,[Lambda1-G1,Lambda2-G2|LGs],C,[Lambda1-P1,Lambda2-P2|LPs]),!,
-	build_context(P1,P2,R,Lambda1_prime,Lambda2_prime,Context,_,_),
+	build_context(P1,P2,R,Lambda1_prime,Lambda2_prime,Context),
 	pairs_values(LPs,Ps),
 	check_each_process(Context,R,[Lambda1_prime,Lambda2_prime|_],[P1,P2|Ps],Fillings),
 	build_process_result(Context,Fillings,R,P).
