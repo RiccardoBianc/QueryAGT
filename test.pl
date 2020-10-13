@@ -169,7 +169,7 @@ test(test_depth_one_in) :- Y = input_type("B","C","label",Y), all_finite_depth(Y
 test(test_depth_infinite_1) :- Y = output_type("B","C",["l1"-Y,"l2"-output_type("C","E",["l1"-Y])]),
 			       \+all_finite_depth(Y,"C").
 
-test(test_depth_infinite_2) :- G1 = output_type("P","Q",["l1"-input_type("P","Q","l1",output_type("Q","R",["k"-								  input_type("Q","R","k",end)])),"l2"-input_type("P","Q","l2",G1)]),
+test(test_depth_infinite_2) :- G1 = output_type("P","Q",["l1"-input_type("P","Q","l1",output_type("Q","R",["k"-input_type("Q","R","k",end)])),"l2"-input_type("P","Q","l2",G1)]),
 			       \+all_finite_depth(G1,"R").
 						  
 test(test_check_infinitely_often) :- G = output_type("Q","R",["label"-G_first]),
