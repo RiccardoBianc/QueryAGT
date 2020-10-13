@@ -136,10 +136,6 @@ build_context(receive_process(B,LP1),receive_process(B,LP2),A,Lambda1,Lambda2,re
 build_context(send_process(B,LP1),send_process(B,LP2),A,Lambda1,Lambda2,send_process(B,Context)) :-
   build_context_list(LP1,LP2,A,Lambda1,Lambda2,Context).
 %--------------------------------------------------------------------------------------------------------------------------------
-
-/*
-Sembra che player non termini se il partecipante non appartiene al tipo e il tipo è infinito
-*/
 player(G,A) :- \+not_player(G,A).
 
 %--------------------------------------------------------------------------------------------------------------------------------
