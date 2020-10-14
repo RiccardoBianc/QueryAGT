@@ -9,8 +9,8 @@
 :- coinductive all_finite_depth_list/2.
 :- coinductive build_context/6.
 :- coinductive build_context_list/6.
-:- coinductive check_queue/4.
-:- coinductive check_queue_children/4.
+:- coinductive not_consume_queue/4.
+:- coinductive not_consume_queue_children/4.
 :- coinductive participants/2.
 :- coinductive participants_list/2.
 %--------------------------------------------------------------------------------------------------------------------------------
@@ -108,9 +108,9 @@ check_each_process(Context,A,[Lambda|Lambdas],[P|Ps],LPss) :-
 	\+(process(Context)),
 	fill_context(Context,Fillings,P),
 	check_branch(Fillings,A,Lambda,Res),
-	check_each_process(Context,A,Lambdas,Ps,FillingsTail),
+	check_each_process(Context,A,Lambdas,Ps,LPss_Tail),
 	\+member(Lambda,Lambdas),
-	change_shape(Res,FillingsTail,LPss).
+	change_shape(Res,LPss_Tail,LPss).
 
 change_shape([[LP]],[Head],[[LP|Head]]).
 
@@ -245,42 +245,42 @@ remove_from_queue(M,A,B,Lambda,M1) :-
 
 %--------------------------------------------------------------------------------------------------------------------------------
 
-check_queue_children([_-G],A,B,Zeta) :-
-	check_queue(G,A,B,Zeta).
+not_consume_queue_children([_-G],A,B,Zeta) :-
+	not_consume_queue(G,A,B,Zeta).
 
-check_queue_children([_-G|LGs],A,B,Zeta) :-
-	check_queue(G,A,B,Zeta),
-	check_queue_children(LGs,A,B,Zeta).
+not_consume_queue_children([_-G|LGs],A,B,Zeta) :-
+	not_consume_queue(G,A,B,Zeta),
+	not_consume_queue_children(LGs,A,B,Zeta).
 
-check_queue_children([_-G|_],A,B,Zeta) :-
-	check_queue(G,A,B,Zeta).
+not_consume_queue_children([_-G|_],A,B,Zeta) :-
+	not_consume_queue(G,A,B,Zeta).
 
-check_queue(end,_,_,[_|_]).
+not_consume_queue(end,_,_,[_|_]).
 
-check_queue(input_type(A,B,Lambda,G),A,B,[Lambda|Zeta]) :-
-	check_queue(G,A,B,Zeta).
+not_consume_queue(input_type(A,B,Lambda,G),A,B,[Lambda|Zeta]) :-
+	not_consume_queue(G,A,B,Zeta).
 
-check_queue(input_type(A,B,Lambda1,_),A,B,[Lambda2|_]) :-
+not_consume_queue(input_type(A,B,Lambda1,_),A,B,[Lambda2|_]) :-
 	Lambda1 \= Lambda2.
 	
-check_queue(input_type(A,B,_,G),C,D,Zeta) :-
+not_consume_queue(input_type(A,B,_,G),C,D,Zeta) :-
 	(A \= C ; B \= D),
-	check_queue(G,C,D,Zeta).
+	not_consume_queue(G,C,D,Zeta).
 
-check_queue(output_type(_,_,LGs),A,B,Zeta) :-
-	check_queue_children(LGs,A,B,Zeta),!.
+not_consume_queue(output_type(_,_,LGs),A,B,Zeta) :-
+	not_consume_queue_children(LGs,A,B,Zeta),!.
 
 
-check_queue_list([Lambda-G],A,B,M) :- 
+not_consume_queue_list([Lambda-G],A,B,M) :- 
 	add_to_queue(A,B,Lambda,M,M1),
 	get_assoc(A-B,M1,Lambdas),
-	check_queue(G,A,B,Lambdas).
+	not_consume_queue(G,A,B,Lambdas).
 	
-check_queue_list([Lambda-G|LGs],A,B,M) :-
+not_consume_queue_list([Lambda-G|LGs],A,B,M) :-
 	add_to_queue(A,B,Lambda,M,M1),
 	get_assoc(A-B,M1,Lambdas),
-	check_queue(G,A,B,Lambdas),
-	check_queue_list(LGs,A,B,M).
+	not_consume_queue(G,A,B,Lambdas),
+	not_consume_queue_list(LGs,A,B,M).
 
 add_if_not_present(GPM_found,G,P,M,GPM_found_modified) :-
 	assoc_to_keys(GPM_found,Gs_found),
@@ -321,7 +321,7 @@ projection_cycle_detect(GPM_found,output_type(A,B,[Lambda1-G1,Lambda2-G2|LGs]),M
   
 projection_cycle_detect(GPM_found,output_type(A,B,LGs),M, A,send_process(B,P_children)) :-
   add_if_not_present(GPM_found,output_type(A,B,LGs),send_process(B,P_children),M,GPM_found_modified),
-  \+check_queue_list(LGs,A,B,M),
+  \+not_consume_queue_list(LGs,A,B,M),
   projection_list(GPM_found_modified,A,B,M,LGs,A,P_children),!.
 
 projection_cycle_detect(GPM_found,output_type(A,B,[Lambda1-G1,Lambda2-G2|LGs]),M,C, P):-
