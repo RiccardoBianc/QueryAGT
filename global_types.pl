@@ -85,9 +85,9 @@ fill_aux_list([L-Ct|LCs],Ps,[L-P|LPs],Remaining_modified) :-
 
 %--------------------------------------------------------------------------------------------------------------------------------
 
-check_branch([receive_process(A,[Lambda-P])],A,Lambda,[[Lambda-P]]).
+check_branch([receive_process(A,[Lambda-P])],A,Lambda,[Lambda-P]).
 
-check_branch([receive_process(A,[Lambda-P])|Ps],A,Lambda,[[Lambda-P]|Res]) :-
+check_branch([receive_process(A,[Lambda-P])|Ps],A,Lambda,[Lambda-P|Res]) :-
 	check_branch(Ps,A,Lambda,Res).
 
 check_each_process(Context,A,[_|Lambdas],[P|Ps],[]) :-
@@ -100,22 +100,25 @@ check_each_process(Context,_,[_],[P],[]) :-
 	fill_context(Context,[],P).
 
 check_each_process(Context,A,[Lambda],[P],LPss) :-
-	\+(process(Context)),
 	fill_context(Context,Fillings,P),
-	check_branch(Fillings,A,Lambda,LPss).
+	check_branch(Fillings,A,Lambda,LPs),
+	cons_branch(LPs,LPss).
 
 check_each_process(Context,A,[Lambda|Lambdas],[P|Ps],LPss) :-
-	\+(process(Context)),
 	fill_context(Context,Fillings,P),
 	check_branch(Fillings,A,Lambda,Res),
 	check_each_process(Context,A,Lambdas,Ps,LPss_Tail),
 	\+member(Lambda,Lambdas),
-	change_shape(Res,LPss_Tail,LPss).
+	add_branch(Res,LPss_Tail,LPss).
 
-change_shape([[LP]],[Head],[[LP|Head]]).
+add_branch([LP],[Head],[[LP|Head]]).
 
-change_shape([[LP]|LPs_single],[Head|LPs_multi],[[LP|Head]|LPs_All]) :-
-	change_shape(LPs_single,LPs_multi,LPs_All).
+add_branch([LP|LPs_single],[Head|LPs_multi],[[LP|Head]|LPs_All]) :-
+	add_branch(LPs_single,LPs_multi,LPs_All).
+
+cons_branch([Lambda-P],[[Lambda-P]]).
+
+cons_branch([Lambda-P|LPs],[[Lambda-P]|LPss]) :- cons_branch(LPs,LPss).
 
 %--------------------------------------------------------------------------------------------------------------------------------
 build_context_list([L-P1],[L-P2],A,Lambda1,Lambda2,[L-Context]) :- 
@@ -216,11 +219,11 @@ add_receive([],_,[]).
 
 add_receive([LPs],A,[receive_process(A,LPs)]).
 
-add_receive([LPs|Lpss],A,[receive_process(A,LPs)|Ps]) :-
-	add_receive(Lpss,A,Ps).
+add_receive([LPs|LPss],A,[receive_process(A,LPs)|Ps]) :-
+	add_receive(LPss,A,Ps).
 
-build_process_result(Context,Fills,A,P) :-
-	add_receive(Fills,A,Fills_with_receive),
+build_process_result(Context,LPss,A,P) :-
+	add_receive(LPss,A,Fills_with_receive),
 	fill_context(Context,Fills_with_receive,P).
 
 %--------------------------------------------------------------------------------------------------------------------------------
@@ -243,7 +246,10 @@ remove_from_queue(M,A,B,Lambda,M1) :-
 	get_assoc(A-B, M,[Lambda|Tail]),!,
 	put_assoc(A-B, M, Tail, M1).
 
+
 %--------------------------------------------------------------------------------------------------------------------------------
+
+consume_queue(G,A,B,Lambdas) :- \+not_consume_queue(G,A,B,Lambdas).
 
 not_consume_queue_children([_-G],A,B,Zeta) :-
 	not_consume_queue(G,A,B,Zeta).
@@ -271,16 +277,16 @@ not_consume_queue(output_type(_,_,LGs),A,B,Zeta) :-
 	not_consume_queue_children(LGs,A,B,Zeta),!.
 
 
-not_consume_queue_list([Lambda-G],A,B,M) :- 
+consume_queue_list([Lambda-G],A,B,M) :- 
 	add_to_queue(A,B,Lambda,M,M1),
 	get_assoc(A-B,M1,Lambdas),
-	not_consume_queue(G,A,B,Lambdas).
+	consume_queue(G,A,B,Lambdas).
 	
-not_consume_queue_list([Lambda-G|LGs],A,B,M) :-
+consume_queue_list([Lambda-G|LGs],A,B,M) :-
 	add_to_queue(A,B,Lambda,M,M1),
 	get_assoc(A-B,M1,Lambdas),
-	not_consume_queue(G,A,B,Lambdas),
-	not_consume_queue_list(LGs,A,B,M).
+	consume_queue(G,A,B,Lambdas),
+	consume_queue_list(LGs,A,B,M).
 
 add_if_not_present(GPM_found,G,P,M,GPM_found_modified) :-
 	assoc_to_keys(GPM_found,Gs_found),
@@ -316,12 +322,12 @@ projection_cycle_detect(GPM_found,output_type(A,B,[Lambda1-G1,Lambda2-G2|LGs]),M
   build_context(P1,P2,A,Lambda1,Lambda2,Context),
   pairs_keys(LGs,Lambdas),
   pairs_values(LPs,Ps),
-  check_each_process(Context,A,[Lambda1,Lambda2|Lambdas],[P1,P2|Ps],Fillings),
-  build_process_result(Context,Fillings,A,P).
+  check_each_process(Context,A,[Lambda1,Lambda2|Lambdas],[P1,P2|Ps],LPss),
+  build_process_result(Context,LPss,A,P).
   
 projection_cycle_detect(GPM_found,output_type(A,B,LGs),M, A,send_process(B,P_children)) :-
   add_if_not_present(GPM_found,output_type(A,B,LGs),send_process(B,P_children),M,GPM_found_modified),
-  \+not_consume_queue_list(LGs,A,B,M),
+  consume_queue_list(LGs,A,B,M),
   projection_list(GPM_found_modified,A,B,M,LGs,A,P_children),!.
 
 projection_cycle_detect(GPM_found,output_type(A,B,[Lambda1-G1,Lambda2-G2|LGs]),M,C, P):-
@@ -331,8 +337,8 @@ projection_cycle_detect(GPM_found,output_type(A,B,[Lambda1-G1,Lambda2-G2|LGs]),M
 	projection_list(GPM_found_modified,A,B,M,[Lambda1-G1,Lambda2-G2|LGs],C,[Lambda1-P1,Lambda2-P2|LPs]),!,
 	build_context(P1,P2,R,Lambda1_prime,Lambda2_prime,Context),
 	pairs_values(LPs,Ps),
-	check_each_process(Context,R,[Lambda1_prime,Lambda2_prime|_],[P1,P2|Ps],Fillings),
-	build_process_result(Context,Fillings,R,P).
+	check_each_process(Context,R,[Lambda1_prime,Lambda2_prime|_],[P1,P2|Ps],LPss),
+	build_process_result(Context,LPss,R,P).
 
 projection_cycle_detect(GPM_found,input_type(A,B,Lambda,G_children),M,B,receive_process(A,[Lambda-P_children])) :- 
   add_if_not_present(GPM_found,input_type(A,B,Lambda,G_children),receive_process(A,[Lambda-P_children]),M,GPM_found_modified),
