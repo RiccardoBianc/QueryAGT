@@ -418,7 +418,7 @@ typing([A-P,B-Q|APs]-M,G-M) :-
 	players(G,Bs),
 	subset(Bs,As).
 
-project_net([A-P],G-M) :-
+project_net([A-P],G-_) :-
 	projection(G,A,P_first),
 	process_preorder(P,P_first).
 
