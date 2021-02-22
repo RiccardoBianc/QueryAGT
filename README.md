@@ -1,6 +1,7 @@
 # Asynchronous-global-types-implementation
 
-Tool executed with Java version 15.0.1, SWI-Prolog version 8.2.2 and ANTLR version 4.8
+To execute the tool Java version >= 15.0.1 and SWI-Prolog version >= 8.2.2 must be installed.
+ANTLR version 4.8 was used to develop the query language.
 
 The repository is composed of the following files:
 - "eclipseProject.jar", containing the eclipse project
