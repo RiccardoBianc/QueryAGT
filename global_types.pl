@@ -390,15 +390,13 @@ process_preorder(zero,zero).
 players(Gs,G,[]) :-
 	member(G,Gs).
 
-players(Gs,output_type(A,_,LGs),Res) :-
-	\+member(output_type(A,_,LGs),Gs),
-	players_list([output_type(A,_,LGs)|Gs],LGs,Subres),
-	sort([A|Subres],Res).
+players(Gs,output_type(A,B,LGs),[B|Res]) :-
+	\+member(output_type(A,B,LGs),Gs),
+	players_list([output_type(A,B,LGs)|Gs],LGs,Res).
 	
-players(Gs,input_type(_,B,_,G),Res) :-
-	\+member(input_type(_,B,_,G),Gs),
-	players([input_type(_,B,_,G)|Gs],G,Subres),
-	sort([B|Subres],Res).
+players(Gs,input_type(A,B,Lambda,G),[A|Res]) :-
+	\+member(input_type(A,B,Lambda,G),Gs),
+	players([input_type(A,B,Lambda,G)|Gs],G,Res).
 	
 players(_,end,[]).
 
@@ -410,7 +408,7 @@ players_list(Gs,[_-G|LGs],Res_tot) :-
 	players_list(Gs,LGs,Res_remaining),
 	append(Res,Res_remaining,Res_tot).
 	
-players(G,As) :- players([],G,Res),permutation(Res,As).
+players(G,As) :- players([],G,Res),sort(Res,Res_no_repetitions),permutation(Res_no_repetitions,As).
 %--------------------------------------------------------------------------------------------------------------------------------
 
 typing([A-P,B-Q|APs]-M,G-M) :-
