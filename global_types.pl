@@ -260,28 +260,28 @@ add_if_not_present(GP_found,G,P,GP_found_modified) :-
 
 %--------------------------------------------------------------------------------------------------------------------------------
 projection_list(GP_found,[Lambda-G],A,[Lambda-P]):-
-	projection_cycle_detect(GP_found,G,A,P),!.
+	projection(GP_found,G,A,P),!.
 
 projection_list(GP_found,[Lambda-G|LGs],A,[Lambda-P|LPs]) :-
-	projection_cycle_detect(GP_found,G,A,P),!,
+	projection(GP_found,G,A,P),!,
 	projection_list(GP_found,LGs,A,LPs),!.	
 
 %--------------------------------------------------------------------------------------------------------------------------------
 
-projection_cycle_detect(GP_found,G,_,P) :-
+projection(GP_found,G,_,P) :-
 	get_assoc(G,GP_found,P).
 	
-projection_cycle_detect(_,G,A,zero) :- not_player(G,A).
+projection(_,G,A,zero) :- not_player(G,A).
 
 
-projection_cycle_detect(GP_found,output_type(A,B,LGs),A,send_process(B,LPs)) :-
+projection(GP_found,output_type(A,B,LGs),A,send_process(B,LPs)) :-
   pairs_keys(LGs,KeysG),
   pairs_keys(LPs,KeysG),
   add_if_not_present(GP_found,output_type(A,B,LGs),send_process(B,LPs),GP_found_modified),
   player(output_type(A,B,LGs),A),
   projection_list(GP_found_modified,LGs,A,LPs).
 
-projection_cycle_detect(GP_found,output_type(A,B,[Lambda1-G1,Lambda2-G2|LGs]),B,P) :-
+projection(GP_found,output_type(A,B,[Lambda1-G1,Lambda2-G2|LGs]),B,P) :-
   add_if_not_present(GP_found,output_type(A,B,[Lambda1-G1,Lambda2-G2|LGs]),P,GP_found_modified),
   player(output_type(A,B,[Lambda1-G1,Lambda2-G2|LGs]),B),
   projection_list(GP_found_modified,[Lambda1-G1,Lambda2-G2|LGs],B,[Lambda1-P1,Lambda2-P2|LPs]),
@@ -291,7 +291,7 @@ projection_cycle_detect(GP_found,output_type(A,B,[Lambda1-G1,Lambda2-G2|LGs]),B,
   check_each_process(Context,A,[Lambda1,Lambda2|Lambdas],[P1,P2|Ps],Fillings),
   build_process_result(Context,Fillings,A,P).
 
-projection_cycle_detect(GP_found,output_type(A,B,[Lambda1-G1,Lambda2-G2|LGs]),C, P):-
+projection(GP_found,output_type(A,B,[Lambda1-G1,Lambda2-G2|LGs]),C, P):-
 	A\=C,B\=C,
 	add_if_not_present(GP_found,output_type(A,B,[Lambda1-G1,Lambda2-G2|LGs]),P,GP_found_modified),
 	player(output_type(A,B,[Lambda1-G1,Lambda2-G2|LGs]),C),
@@ -301,30 +301,30 @@ projection_cycle_detect(GP_found,output_type(A,B,[Lambda1-G1,Lambda2-G2|LGs]),C,
 	check_each_process(Context,R,[Lambda1_prime,Lambda2_prime|_],[P1,P2|Ps],Fillings),
 	build_process_result(Context,Fillings,R,P).
 
-projection_cycle_detect(GP_found,output_type(A,B,[Lambda-G]),C,P) :- 
+projection(GP_found,output_type(A,B,[Lambda-G]),C,P) :- 
 	C \= A,
 	add_if_not_present(GP_found,output_type(A,B,[Lambda-G]),P,GP_found_modified),
 	player(output_type(A,B,[Lambda-G]),C),
-	projection_cycle_detect(GP_found_modified,G,C,P),!.
+	projection(GP_found_modified,G,C,P),!.
 
-projection_cycle_detect(GP_found,input_type(A,B,Lambda,G),B,receive_process(A,[Lambda-P_children])) :- 
+projection(GP_found,input_type(A,B,Lambda,G),B,receive_process(A,[Lambda-P_children])) :- 
 	add_if_not_present(GP_found,input_type(A,B,Lambda,G),receive_process(A,[Lambda-P_children]),GP_found_modified),
 	player(input_type(A,B,Lambda,G),B),
-	projection_cycle_detect(GP_found_modified,G,B,P_children).
+	projection(GP_found_modified,G,B,P_children).
 
 
-projection_cycle_detect(GP_found,input_type(A,B,Lambda,G),C,P) :-
+projection(GP_found,input_type(A,B,Lambda,G),C,P) :-
 	C\=B,
 	add_if_not_present(GP_found,input_type(A,B,Lambda,G),P,GP_found_modified),
 	player(input_type(A,B,Lambda,G),C),
-	projection_cycle_detect(GP_found_modified,G,C,P).
+	projection(GP_found_modified,G,C,P).
 
 
 %--------------------------------------------------------------------------------------------------------------------------------
 
 projection(G,A,P) :- 
 	empty_assoc(GP_found),
-	projection_cycle_detect(GP_found,G,A,P).
+	projection(GP_found,G,A,P).
 	
 %--------------------------------------------------------------------------------------------------------------------------------
 
@@ -420,7 +420,7 @@ typing([A-P,B-Q|APs]-M,G-M) :-
 	players(G,Bs),
 	subset(Bs,As).
 
-project_net([A-P],G-_) :-
+project_net([A-P],G-M) :-
 	projection(G,A,P_first),
 	process_preorder(P,P_first).
 
