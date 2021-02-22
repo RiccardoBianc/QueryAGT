@@ -8,9 +8,9 @@ The repository is composed of the following files:
 - "test.txt", containing some example tests written in the query language
 - "test_generator.jar", containing the executable version of the tool
 
-To execute the tests written in file "input.txt" and write the resulting prolog code in file "code.pl" 
+To execute the tests written in file "test.txt" and write the resulting prolog code in file "code.pl" 
 ```
-java -jar test_generator.jar input.txt code.pl
+java -jar test_generator.jar test.txt code.pl
 ```
 During the execution the tool produces a new copy of "global_types.pl" in the same folder of runnable jar and "code.pl" is overwritten if already exists.
 
