@@ -531,7 +531,7 @@ check_remaining_list(GMs,[_-G|LGs],M) :-
 check_remaining(GMs,G,M) :-
 	member(G-M,GMs).
 	
-check_remaining(GMs,end,M) :- \+member(end,GMs),empty_assoc(M).
+check_remaining(GMs,end,M) :- \+member(end,GMs).
 
 check_remaining(GMs,input_type(A,B,Lambda,G),M) :- 
 	\+member(input_type(A,B,Lambda,G)-M,GMs),
@@ -551,7 +551,7 @@ check_remaining(GMs,output_type(A,B,LGs),M) :-
 
 check_remaining(GMs,output_type(A,B,LGs),M) :- 
 	\+member(output_type(A,B,LGs)-M,GMs),
-	\+get_assoc(A-B, M,_),
+	\+get_assoc(A-B, M,_),%side condition verification
 	check_remaining_list([output_type(A,B,LGs)-M|GMs],LGs,M).
 
 
