@@ -1,0 +1,873 @@
+Group_growing_queue[
+
+test_growing_queue{
+GlobalType G = p>q!
+  {
+  l1; q>p!l3; p>q!l1; G, 
+  l2; q>p!l3; p>q!l2; G
+  }
+not io-match G|Empty
+}	
+
+]
+
+Group_not_bounded[
+
+projection_not_bounded{
+GlobalType G = p>q!
+     {
+     l1; p>q?l1; q>r!l3; q>r?l3; G,
+     l2; p>q?l2; G
+     }		 
+not bounded G
+}
+
+]
+
+Group_well_formed[
+
+test_well_formed{
+GlobalType G = q>p! 
+     {
+     a; q>p?a; G1,
+     b; q>p?b; G2
+     }
+GlobalType G1 = p>q!x; p>q!x; p>q!x; p>q?x; G
+GlobalType G2 = p>q!x; p>q?x; G2
+wf G | Empty
+}
+
+]
+
+Group_deadlock[
+
+test_deadlock{
+GlobalType G = p>q!l1; p>q?l1; G_prime 
+GlobalType G_prime = p>q!{
+                          l1;G,
+						  l2; p>q?l2; G
+						  }
+not wf G|Empty
+}
+
+]
+
+
+Test_Group[
+Test1{
+GlobalType G = p>q!label2; p>q?label2; p>q!label; p>q?label; G
+Process Q = p?label2; p?label; Q
+Process P = q!label2; q!label; P
+Session S = q[Q] | p[P] | Empty
+proj(G,q) ==  Q
+wf G|Empty
+S has type G|Empty
+io-match G|Empty
+}
+
+Test2{
+GlobalType G = p>l!label; p>q!label; G
+exists-proj(G,q)
+exist-all-proj G
+bounded G
+not io-match G|Empty
+not wf G|Empty
+}
+]
+
+primoGruppo [
+
+test_example_4{
+GlobalType G = p>q!
+     {
+     l1; G1,
+     l2; G2
+     }
+GlobalType G1 = q>r!
+      {
+      l3; p>q?l1; q>r?l3; G,
+      l4; p>q?l1; q>r?l4; G
+      }
+GlobalType G2 = q>r!
+      {
+      l3; p>q?l2; q>r?l4; G,
+      l4; p>q?l2; q>r?l4; G
+      }
+ 
+Process P1q = r!
+        {
+        l3; p?l1; Pq,
+        l4; p?l1; Pq
+        }
+Process P2q = r!
+       {
+       l3; p?l2; Pq,
+       l4; p?l2; Pq
+       }
+Process Pq = r!
+      {
+      l3; p?
+          {
+          l1; Pq,
+          l2; Pq
+          },
+      l4; p?
+          {
+          l1; Pq,
+          l2; Pq
+          }
+      }
+proj(G,q) == Pq
+}
+
+test_well_form{
+GlobalType G = p>q!l1; p>q!l2; p>q?l1; p>q?l2; p>q!l1; p>q!l2; G
+wf G | Empty
+bounded G
+}
+
+test_two_holes_new{
+GlobalType G = p>q!
+     { 
+	 x1; q>r!
+	     {
+	     l1; p>q?x1; q>r?l1; r>p!y1; r>p?y1; G, 
+	     l2; p>q?x1; q>r?l2; r>p!y2; r>p?y2; End 
+	     },
+	 x2; q>r!
+	     { 
+	     l1; p>q?x2; q>r?l1; r>p!y1; r>p?y1; G, 
+	     l2; p>q?x2; q>r?l2; r>p!y2; r>p?y2; End 
+	     }
+	 }
+Process P_r = q?
+       {
+       l1; p!y1; P_r,
+       l2; p!y2; 0
+       }
+Process P_q = r!
+       {
+       l1; p?
+           {
+           x1; P_q,
+           x2; P_q
+           },
+       l2; p?
+           {
+           x1; 0,
+           x2; 0
+           }
+       }
+Process P_p = q!
+       {
+       x1; r?
+           {
+           y1; P_p,
+           y2; 0
+           },
+       x2; r?
+           {
+           y1; P_p,
+           y2; 0
+           }
+       }
+proj(G,r) == P_r  
+proj(G,q) == P_q 
+proj(G,p) == P_p
+/*exist-all-proj G*/
+}
+
+test_two_holes{
+GlobalType G = p>q!
+     {
+     x1; q>r!
+         {
+         l1; p>q?x1 ; q>r? l1; G,
+         l2; p>q?x1; q>r? l2;End
+         },
+     x2; q>r!
+         {
+         l1; p>q?x2; q>r? l1; G,
+         l2; p>q?x2; q>r? l2; End
+         }
+     }
+Process P_q = r!
+        {
+        l1; p?
+            {
+            x1; P_q,
+            x2; P_q
+            },
+        l2; p?
+            {
+            x1; 0,
+            x2; 0
+            }
+        }
+Process P_r = q? 
+         {
+         l1; P_r,
+         l2; 0
+         }
+proj(G,q) == P_q 
+not exists-proj(G,p)
+proj(G,r) == P_r
+not exist-all-proj G
+not wf G|Empty
+bounded G
+}
+
+test_Nobuko{
+GlobalType G = 
+ctl>src!b1; sk>ctl!b1; ctl>src?b1; src>ctl!b1; src>bp1!data; src>bp1?data; src>ctl?b1; sk>ctl?b1; ctl>sk!b1; ctl>src!b2; ctl>src?b2;
+src>ctl!b2; src>bp2!data; src>bp2?data; ctl>sk?b1; src>ctl?b2; bp1>sk!data; bp1>sk?data; sk>ctl!b2; sk>ctl?b2; ctl>sk!b2; ctl>sk?b2;
+bp2>sk!data; bp2>sk?data; G
+
+Process Psrc = ctl?b1; ctl!b1; bp1!data; ctl?b2; ctl!b2; bp2!data; Psrc
+
+Process Psrc_modified = ctl?{
+        b1; ctl!b1; bp1!data; ctl?b2; ctl!b2; bp2!data; Psrc,
+	    b2; ctl!b1; bp1!data; ctl?b2; ctl!b2; bp2!data; Psrc
+	    }
+Process Psrc_example = ctl?{
+        b1; ctl!b1; bp1!data; Psrc_example,
+	    b2; ctl!b2; bp2!data; Psrc_example
+	    }
+
+Process Psk = ctl!b1; ctl?b1; bp1?data; ctl!b2; ctl?b2; bp2?data; Psk
+Process Pctl = src!b1; src?b1; sk?b1; sk!b1; src!b2; src?b2; sk?b2; sk!b2; Pctl
+Process Pbpn = src?data; sk!data; Pbpn
+proj(G,sk) == Psk
+proj(G,src) == Psrc
+proj(G,ctl) == Pctl
+proj(G,bp1) == Pbpn
+proj(G,bp2) == Pbpn
+wf G | Empty
+sk[Psk] | src[Psrc] | ctl[Pctl] | bp1[Pbpn] | bp2[Pbpn] | Empty has type G | Empty
+sk[ Psk] | src[Psrc_modified] | ctl[Pctl] | bp1[Pbpn] | bp2[Pbpn] | Empty has type G | Empty
+sk[Psk] | src[Psrc_example] | ctl[Pctl] | bp1[Pbpn] | bp2[Pbpn] | Empty has type G | Empty
+}
+
+
+
+projection_not_finite_weight {
+GlobalType G1 = p>q!{l1;p>q?l1;q>r!k;q>r?k;End,l2;p>q?l2;G1}
+Process Y = q?k;0
+proj(G1,r) == Y
+}
+
+test_nove{
+GlobalType G = m2>m1! 
+     {
+     a; m2>m1?a; G1,
+     b; m2>m1?b; G2
+     }
+GlobalType G1 = m1>m2!x; m1>m2!x; m1>m2!x; m1>m2?x; G
+GlobalType G2 = m1>m2!x; m1>m2?x; G2
+Process P = m2!x; P
+Process Q = m1?x; Q
+Process G_m1 = m2?
+        {
+        a; m2!x; m2!x; m2!x; G_m1,
+        b; P 
+        }
+Process G_m2 = m1!
+        {
+        a; m1?x; G_m2,
+        b; Q
+        }
+proj(G,m1) == G_m1
+proj(G,m2) == G_m2
+wf G | Empty
+wf G1 | Empty
+wf G2 | Empty
+}
+/*non ci sono messaggi non letti, ma la coda cresce, non banale*/
+
+
+test_otto_uno{
+GlobalType G = s>c!
+     {
+     lg; s>c?lg; c>a!pw; c>a?pw; a>s!at; a>s?at; End,
+     cn; s>c?cn; c>a!qt; c>a?qt; End
+     }
+wf G | Empty
+proj(G,s) == c!{lg;a?at;0,cn;0}
+proj(G,c) == s?{lg;a!pw;0,cn;a!qt;0}
+proj(G,a) == c?{pw;s!at;0,qt;0}
+
+}
+
+test_otto_due{ 
+GlobalType G = m>w1!dt; m>w1?dt; m>w2!dt; m>w2?dt; w1>r!rs; w1>r?rs; w2>r!rs; w2>r?rs; r>m!
+     {
+     ct; r>m?ct; G, 
+     st; r>m?st; m>w1!st; m>w1?st; m>w2!st; m>w2?st; End
+     }	
+Process P_m = w1!dt; w2!dt; r?
+       {
+       ct; P_m,
+       st; w1!st; w2!st; 0
+       }
+Process P_r = w1?rs; w2?rs; m!
+       {
+       ct; P_r,
+       st; 0
+       }
+Process P_wi = r!rs; m?
+        {
+        dt; P_wi,
+        st; 0
+        }
+wf G | Empty
+proj(G,m) == P_m
+proj(G,r) == P_r
+proj(G,w1) == m?dt; P_wi
+proj(G,w2) == m?dt; P_wi
+}
+
+test_otto_tre{
+GlobalType G = s>wa!dt; s>wa?dt; G1
+GlobalType G1 = wa>wb!
+      {
+      dt; wa>wb?dt; G1,
+      st; wa>wb?st; wb>wc!st; wb>wc?st; End
+      }
+Process P = wa?
+     {
+     dt; P,
+     st; wc!st; 0
+     }
+Process Processoj_c = wb?st; 0
+Process P_wa = wb!
+        {
+        dt; P_wa,
+        st; 0
+        }
+/*wf G | Empty
+wf G1 | Empty*/
+proj(G,s) == wa!
+           {
+           dt; 0
+           }
+proj(G,wa) == s?dt; P_wa
+proj(G,wb) == wa?
+            {
+            dt; P,
+            st; wc!st; 0
+            }
+proj(G,wc) == Processoj_c
+}
+
+
+test_otto_quattro{
+GlobalType G = p>r!
+     {
+     sc; p>r?sc; G_prime,
+     er; p>r?er; G_prime
+     }
+GlobalType G_prime = r>q!
+           {
+           ct; r>q?ct; End,
+           st; r>q?st; End
+           }
+proj(G,p) == r!
+           {
+           sc; 0,
+           er; 0
+           }
+proj(G,r) == p?
+           {
+           sc; q!
+               {
+               ct; 0,
+               st; 0
+               },
+           er; q!
+               {
+               ct; 0,
+               st; 0
+               }
+           }
+proj(G,q) == r?
+           {
+           ct; 0,
+           st; 0
+           }
+wf G | Empty
+}
+
+test_otto_quattro_variante{
+GlobalType G = p>r!
+     {
+     sc; p>r?sc; G_prime,
+     er; p>r?er; G_second
+     }
+GlobalType G_prime = r>q!
+           {
+           ct; r>q?ct; r>p!ct; r>p?ct; G,
+           st; r>q?st; r>p!st; r>p?st; End
+           }
+GlobalType G_second = r>q!
+            {
+            ct; r>q?ct; r>p!st; r>p?st; End,
+            st; r>q?st; r>p!st; r>p?st; End
+            }
+Process P_p = r!
+       {
+       sc; r?
+           {
+           ct; P_p,
+           st; 0
+           },
+       er; r?st; 0
+       }
+Process P_r = p?
+       {
+       sc; q!
+           {
+           ct; p!ct; P_r,
+           st; p!st; 0
+           },
+       er; q!
+           {
+           ct; p!st; 0,
+           st; p!st; 0
+           }
+       }
+Process P_q = r?
+       {
+       ct; P_q,
+       st; 0
+       }
+proj(G,p) == P_p
+not exists-proj(G,q)
+proj(G,r) == P_r
+not wf G|Empty
+}
+
+test_otto_cinque{
+GlobalType G = r>q!
+     {
+     ct; G_prime,
+     st; G_second
+     }
+GlobalType G_prime = p>r!
+           {
+           sc; p>r?sc; r>q?ct; End,
+           er; p>r?er; r>q?ct; End
+           }
+GlobalType G_second = p>r!
+            {
+            sc; p>r?sc; r>q?st; End,
+            er; p>r?er; r>q?st; End
+            }
+proj(G,p) == r!
+           {
+           sc; 0,
+           er; 0
+           }
+proj(G,r) == q!
+           {
+           ct; p?
+               {
+               sc; 0,
+               er; 0
+               },
+           st; p?
+               {
+               sc; 0,
+               er; 0
+               }
+           }
+proj(G,q) == r?
+           {
+           ct; 0,
+           st; 0
+           }
+wf G | Empty
+}
+
+test_dieci{
+GlobalType G = c>s!
+     {
+     hi; c>s?hi; G1,
+     lw; c>s?lw; G1
+     }
+GlobalType G1 = s>c!
+      {
+      ok; s>c?ok; G,
+      ko; s>c?ko; G
+      }
+Process P = c!
+     {
+     ok; P_s,
+     ko; P_s
+     }
+Process P_s = c?
+       {
+       hi; P,
+       lw; P
+       }
+Process P_c = s!
+       {
+       hi; Q,
+       lw; Q
+       }
+Process Q = s?
+     {
+     ok; P_c, 
+     ko; P_c
+     }
+Process Ps = P_s
+Process Pc = s!hi; s?
+      {
+      ok; Pc,
+      ko; s!lw; s?
+                {
+                ok; Pc,
+                ko; Pc
+                }
+      }
+proj(G,s) == P_s 
+proj(G,c) == P_c
+c[Pc] | s[Ps] | Empty has type G | Empty
+}
+
+test_otto_cinque_variante{
+GlobalType G = r>q!
+     {
+     ct; G_prime,
+     st; G_second
+     }
+GlobalType G_prime = p>r!
+           {
+           sc; p>r?sc; r>q?ct; r>p!ct; r>p?ct; G,
+           er; p>r?er; r>q?ct; r>p!st; r>p?st; End
+           }
+GlobalType G_second = p>r!
+            {
+            sc; p>r?sc; r>p!st; r>p?st; r>q?st; End,
+            er; p>r?er; r>p!st; r>p?st; r>q?st; End
+            }
+Process P_p = r!
+       {
+       sc; r?{
+           ct; P_p,
+           st; 0
+           },
+       er; r?st; 0
+       }
+Process P_r = q!
+       { 
+       ct; p?
+           {
+           sc; p!ct; P_r,
+           er; p!st; 0
+           },
+       st; p?
+           {
+           sc; p!st; 0,
+           er; p!st; 0
+           }
+       }
+proj(G,p) == P_p
+not exists-proj(G,q)
+proj(G,r) == P_r
+not wf G | Empty
+}
+
+test_skype{
+GlobalType G = p>q!
+     {
+     x1; q>r! 
+         {
+         l1; p>q?x1 ; G,
+         l2; p>q?x1; G
+         },
+     x2; q>r!
+         { 
+         l1; p>q?x2; G,
+         l2; p>q?x2; G
+         }
+     }
+Process P_q = r!
+       {
+       l1; p?
+           {
+           x1; P_q,
+           x2; P_q
+           },
+       l2; p?
+           {
+           x1; P_q,
+           x2; P_q
+           }
+       }
+Process P_p = q! 
+       { 
+       x1; P_p ,
+       x2; P_p 
+       }
+proj(G,p) == P_p
+proj(G,q) == P_q
+proj(G,r) == 0
+
+}
+
+test_esempio_4_pagina_8{
+GlobalType G = p>q!lambda; p>q!
+     {
+     lambda1; G1,
+     lambda2; G2
+     }
+GlobalType G1 = p>q?lambda; G1_prime
+GlobalType G2 = p>q?lambda; G2_prime
+GlobalType G1_prime = p>q?lambda1; G
+GlobalType G2_prime = p>q?lambda2; G
+wf G | Empty
+exists-proj(G,q)
+}
+
+test_esempio_5_pagina_10{
+GlobalType G = q>p!
+     {
+     lambda1; q>p?lambda1; G1,
+     lambda2; q>p?lambda2; G2
+     }
+GlobalType G1 = p>q!lambda; p>q!lambda; p>q!lambda; p>q?lambda; G
+GlobalType G2 = p>q!lambda; p>q?lambda; G2
+wf G | Empty
+}
+
+projection_existing_participant{
+GlobalType X = p>q!label; X
+Process Y = q!label; Y
+proj(X,p) == Y
+not wf X | Empty
+}
+
+
+projection_not_existing_participant{
+GlobalType X = p>q!label; X
+proj(X,l) == 0
+not wf X | Empty
+}
+
+									 
+projection_existing_participant_wrong{
+GlobalType X = p>q!label; X
+Process Y = l!label; Y 
+not proj(X,p) == Y
+not wf X | Empty
+}
+
+											 
+projection_not_existing_participant_wrong{
+GlobalType X = p>q!label; X
+Process Y = w!label; Y 
+not proj(X,l) == Y
+not wf X | Empty
+}
+
+
+client_server_1{
+GlobalType G1 = sr>cl!
+      {
+      yes; sr>cl?yes; G,
+      no; sr>cl?no; G
+      }
+GlobalType G = cl>sr!
+     {
+     lq; cl>sr?lq; G1,
+     hq; cl>sr?hq; G1
+     }
+Process Psr = cl!
+       {
+       yes; cl? 
+            {
+            lq; Psr,
+            hq; Psr
+            },
+            
+       no; cl? 
+            {
+            lq; Psr,
+            hq; Psr
+            }
+       }
+Process Pcl = sr?
+     {
+     yes; sr!
+          {
+          lq; Pcl,
+          hq; Pcl
+          },
+     no; sr!
+         {
+         lq; Pcl,
+         hq; Pcl
+         }
+     }
+Process Psr_modified = cl!
+       {
+       no; cl? 
+            {
+            lq; Psr_modified,
+            hq; Psr_modified
+            }
+       }
+Process Pcl_modified = sr?
+     {
+     yes; sr!
+          {
+          lq; Pcl_modified,
+          hq; Pcl_modified
+          },
+      no; sr!
+      {
+      hq; Pcl_modified
+      },
+      
+      maybe; sr!
+      {
+      lq; Pcl_modified
+      }
+     }
+proj(G1,cl) == Pcl
+proj(G1,sr) == Psr
+wf G1 | Empty
+cl [Pcl] | sr [Psr] | Empty has type G1 | Empty
+cl [Pcl_modified] | sr [Psr_modified] | Empty has type G1 | Empty
+}
+
+
+
+projection_label_exchanging{ 
+GlobalType X = p>q!label; p>q?label; X
+Process Y = p?label; Y	
+proj(X,q) == Y
+wf X | Empty
+}
+
+projection_label_exchanging_wrong_label1{
+GlobalType X = p>q!label; p>q?label2; X
+Process Y = p?label; Y
+not proj(X,q) == Y
+not wf X | Empty
+}
+
+projection_label_exchanging_wrong_label2{
+GlobalType X = p>q!label2; p>q?label; X
+Process Y = p?label; Y
+proj(X,q)== Y
+not wf X | Empty
+}
+
+
+projection_on_not_player1{ 
+GlobalType X = p>q!label; X
+proj(X,q) == 0
+not wf X | Empty
+}
+
+projection_on_not_player2{  
+GlobalType X = l>q!label; p>q?label; X
+Process Y = p?label; Y
+proj(X,q) == Y
+not wf X | Empty
+}
+
+
+projection_on_not_player3{ 
+GlobalType X = l>q!label; p>q!label; X
+proj(X,q) == 0
+not wf X | Empty
+}
+
+projection_double_send1{ 
+GlobalType X = p>q!label; p>q!label2; p>q?label; p>q?label2; X
+Process Y = p?label; p?label2; Y
+proj(X,q) == Y
+wf X | Empty
+}		 
+				 
+
+projection_double_send2{
+GlobalType G = p>q!label2; p>q?label2; p>q!label; p>q?label; G
+Process Q = p?label2; p?label; Q
+Process P = q!label2; q!label; P
+Session S = q[Q] | p[P] | Empty_queue 
+Queue Empty_queue = Empty
+proj(G,q) ==  Q
+wf G | Empty_queue
+S has type G | Empty_queue
+}
+
+
+projection_on_not_player4{
+GlobalType X = p>l!label; p>q!label; X
+proj(X,q) == 0
+not wf X | Empty
+}
+
+projection_on_not_player5{
+GlobalType X = p>l!label; p>q!label; X	
+proj(X,q) == 0
+not wf X | Empty
+}
+
+projection_on_receiver_wrong_labels{
+GlobalType X = p>q!label; p>q?label2; X
+Process Y = p?label; Y
+not proj(X,q) == Y
+not wf X | Empty
+}
+					 							 
+projection_crossed_dependencies{
+GlobalType G = p>q?l1; p>q!
+     {
+     l1; p>q?l1; G,
+     l2; p>q?l2; G
+     }		 
+Process Y = q!
+     {
+     l1; Y,
+     l2; Y
+     }
+Process X = p?l1; p?{l1; X, l2; X}
+Process Y_modified = q!
+     {
+     l1; Y
+     } 
+proj(G,p) == Y
+proj(G,q) == X
+not wf G | Empty
+not wf G | <p,l1,q>
+p[Y] | q[X] | Empty has type G | Empty
+p[Y_modified] | q[X] | Empty has type G | Empty
+}
+
+projection_not_bounded{
+GlobalType G = p>q!
+     {
+     l1; p>q?l1; q>r!l3; q>r?l3; G,
+     l2; p>q?l2; G
+     }		 
+not wf G | Empty
+not bounded G
+}
+
+projection_not_all_messages_read{
+GlobalType G2 = p>r!k; G_first
+GlobalType G_first = p>q!l; p>q?l; G_first
+exists-proj(G2,p)
+}
+
+projection_all_messages_read{
+GlobalType G = p>q!l; p>q?l; G	
+Process Y = q!l; Y
+proj(G,p) == Y
+}
+
+]
