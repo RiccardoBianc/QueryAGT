@@ -83,3 +83,4 @@ where `decl_i` is a declaration. A query is written with syntax:
 
 
 where `query` is a query with the syntax as above.
+File ***test.txt*** contains 124 queries of test
