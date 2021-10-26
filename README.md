@@ -10,7 +10,7 @@ Firstly you have to install Maven, Java and SWI-Prolog in the versions as above.
     mvn package
 
 
-in the directory that containing file ***pom.xml***. The produced executable jar file is contained in the generated directory ***target***, with name ***QuertAGT.jar***.
+in the directory containing file ***pom.xml***. The produced executable jar file is contained in the generated directory ***target***, with name ***QuertAGT.jar***.
 To execute the tool you have to execute command
 
 
