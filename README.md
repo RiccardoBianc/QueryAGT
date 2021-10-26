@@ -14,10 +14,10 @@ in the directory containing file ***pom.xml***. The produced executable jar file
 To execute the tool you have to execute command
 
 
-    java -jar QueryAGT.jar [input_file] [outputfile]
+    java -jar QueryAGT.jar [path_input_file] [path_output_file]
 
 
-in the directory containing the jar file. The first optional argument is the input filename, the second optional argument is the output filename. If no argument is provided then the tool is launched in interactive modality.
+in the directory containing the jar file. The first optional argument is the input filename, the second optional argument is the output filename. If no argument is provided then the tool is launched in interactive modality. 
 
 A program in this language consists of ***groups***, each one consisting of many ***tests***. Both groups and tests have names. 
 For instance, the program below consists in a single group, composed by two tests. 
