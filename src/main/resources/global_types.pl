@@ -15,24 +15,45 @@
 :- coinductive process_preorder/2.
 
 %--------------------------------------------------------------------------------------------------------------------------------
+% auxiliary functions
+%
+% participant_name(A) holds if A is valid participant name, that is, a string
+% label(Lambda) holds if Lambda is valid label, that is, a string
+% unique_keys(KVs) holds if in the key-value list KVs all keys are unique
+% map_from_to(DomainA,DomainB,List) holds if in the pairs list List for all the first elements hold predicate DomainA and for all the second elements hold DomainB
+% pait_domain(X,Y,Left-Right) holds if both predicate X with argument Left and predicate Y with argument Right hold
+% 
+%--------------------------------------------------------------------------------------------------------------------------------
 participant_name(A) :- string(A).
 
+%----------------------------------------------------------------
 label(Lambda) :- string(Lambda).
 
+%----------------------------------------------------------------
 unique_keys(KVs) :-
 	pairs_keys(KVs,Ks),
 	is_set(Ks).
 
+%----------------------------------------------------------------
 map_from_to(DomainA,DomainB,List) :-
 	unique_keys(List),
 	maplist(({DomainA,DomainB}/[Pair]>> pair_domain(DomainA,DomainB,Pair)), List).
 
+%----------------------------------------------------------------
 pair_domain(X,Y,Left-Right):-
 	call(X,Left),
 	call(Y,Right).
 
 %--------------------------------------------------------------------------------------------------------------------------------
-
+% values checking predicates
+%
+% global_type(G) holds if G is a global type
+% context(C) holds if C is a context
+% queue(Q) holds if Q is a queue
+% process(P) holds if P is a process
+% network(N) holds if N is a network
+% 
+%--------------------------------------------------------------------------------------------------------------------------------
 global_type(output_type(A,B,[Lambda-G|LGs])) :- 
 	A \= B,
 	participant_name(A),
@@ -48,7 +69,7 @@ global_type(input_type(A,B,L,G)) :-
 
 global_type(end).
 
-%--------------------------------------------------------------------------------------------------------------------------------
+%----------------------------------------------------------------
 context(hole).
 
 context(Ctx) :- 
@@ -62,7 +83,31 @@ context(receive_process(A,[Lambda-Ctx|LCtxs])) :-
 	participant_name(A),
 	map_from_to(label,context,[Lambda-Ctx|LCtxs]).
 
+%----------------------------------------------------------------
+process(zero).
+
+process(send_process(A,[Lambda-P|LPs])) :- 
+	participant_name(A),
+	map_from_to(label,process,[Lambda-P|LPs]).
+
+process(receive_process(A,[Lambda-P|LPs])) :- 
+	participant_name(A),
+	unique_keys(LPs),
+	map_from_to(label,process,[Lambda-P|LPs]).
+
+%----------------------------------------------------------------
+queue([]).
+
+queue([A-B-Lambdas|M]) :-
+	map_from_to(participant_pair,label_list,[A-B-Lambdas|M]).
+
+%----------------------------------------------------------------
+network([A1-P1,A2-P2|APs]-M) :- 
+	map_from_to(participant_name,process,[A1-P1,A2-P2|APs]),
+	queue(M).
+
 %--------------------------------------------------------------------------------------------------------------------------------
+	
 
 fill_context(Ctx,Ps,P) :- fill_aux(Ctx,Ps,P,[]),!.
 
@@ -165,16 +210,7 @@ not_player(input_type(_,B,_,G), A) :-
 not_player(end,_).
 %--------------------------------------------------------------------------------------------------------------------------------
 
-process(zero).
 
-process(send_process(A,[Lambda-P|LPs])) :- 
-	participant_name(A),
-	map_from_to(label,process,[Lambda-P|LPs]).
-
-process(receive_process(A,[Lambda-P|LPs])) :- 
-	participant_name(A),
-	unique_keys(LPs),
-	map_from_to(label,process,[Lambda-P|LPs]).
 
 %--------------------------------------------------------------------------------------------------------------------------------
 
@@ -340,16 +376,6 @@ participant_pair(A-B) :-
 
 %--------------------------------------------------------------------------------------------------------------------------------
 
-queue([]).
-
-queue([A-B-Lambdas|M]) :-
-	map_from_to(participant_pair,label_list,[A-B-Lambdas|M]).
-
-%--------------------------------------------------------------------------------------------------------------------------------
-
-network([A1-P1,A2-P2|APs]-M) :- 
-	map_from_to(participant_name,process,[A1-P1,A2-P2|APs]),
-	queue(M).
 
 %--------------------------------------------------------------------------------------------------------------------------------	
 
