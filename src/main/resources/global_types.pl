@@ -102,6 +102,16 @@ queue([A-B-Lambdas|M]) :-
 	map_from_to(participant_pair,label_list,[A-B-Lambdas|M]).
 
 %----------------------------------------------------------------
+participant_pair(A-B) :-
+	participant_name(A),
+	participant_name(B).
+
+%----------------------------------------------------------------
+label_list([]).
+label_list(Lambdas) :-
+	maplist(label,Lambdas).
+	
+%----------------------------------------------------------------
 network([A1-P1,A2-P2|APs]-M) :- 
 	map_from_to(participant_name,process,[A1-P1,A2-P2|APs]),
 	queue(M).
@@ -112,6 +122,7 @@ network([A1-P1,A2-P2|APs]-M) :-
 % fill_context(Ctx,Ps,P) holds if replacing holes in Ctx as obtained in a DFS with processes Ps we obtain P
 % check_each_process(Ctx,A,Lambdas,Ps,List) checks that all the processes Ps can be obtained by filling the holes of Ctx and that the fillings for the i_th process in Ps starts with an input from A and the i_th label in Lambdas
 % build_context(LP1s,LP2s,A,Lambda1,Lambda2,LCtxs) scans the first two processes P1 and P2 checking they are equal apart from subterms which start with an input from the sender A and labels Lambda1 and Lambda2 respectively. Ctx will contain the context corresponding to the common part among the two processes, with holes in place of their different subterms 
+% build_process_result(Context,Fills,A,P) holds if process P can be obtained by filling the holes of Ctx, notably, the j_th hole by the external choice p?{Lambda_i P_{i,j}}
 %
 %--------------------------------------------------------------------------------------------------------------------------------
 
@@ -192,9 +203,23 @@ build_context_list([L-P1],[L-P2],A,Lambda1,Lambda2,[L-Context]) :-
 build_context_list([L-P1|LP1s],[L-P2|LP2s],A,Lambda1,Lambda2,[L-Context|Contexts]) :-
 	build_context(P1,P2,A,Lambda1,Lambda2,Context),
 	build_context_list(LP1s,LP2s,A,Lambda1,Lambda2,Contexts).
- 
+
+%----------------------------------------------------------------
+add_receive([],_,[]).
+
+add_receive([LPs],A,[receive_process(A,LPs)]).
+
+add_receive([LPs|Lpss],A,[receive_process(A,LPs)|Ps]) :-
+	add_receive(Lpss,A,Ps).
+
+%----------------------------------------------------------------
+build_process_result(Context,Fills,A,P) :-
+	add_receive(Fills,A,Fills_with_receive),
+	fill_context(Context,Fills_with_receive,P).
+
 %--------------------------------------------------------------------------------------------------------------------------------
-% player operations
+% players operations
+%
 % player(G,A) holds if A is a player in G
 % players(G,As) holds if As is the list of participants of G
 %
@@ -244,9 +269,9 @@ players_list(Gs,[_-G|LGs],Res_tot) :-
 	append(Res,Res_remaining,Res_tot).
 	
 %--------------------------------------------------------------------------------------------------------------------------------
+% depth
 %
-%
-%
+% all_finite_depth(G,A) holds if participant A has finite depth in G
 %
 %--------------------------------------------------------------------------------------------------------------------------------
 
@@ -267,7 +292,7 @@ all_finite_depth_list([_-G|LGs],A) :-
 	all_finite_depth(G,A),
 	all_finite_depth_list(LGs,A).
 
-%--------------------------------------------------------------------------------------------------------------------------------
+%----------------------------------------------------------------
 finite_depth_list([_-G],A,G_found) :-
 	finite_depth(G,A,G_found).
 
@@ -291,18 +316,96 @@ finite_depth(input_type(A,B,_,G),C,G_found) :-
 	finite_depth(G,C,[input_type(A,B,_,G)|G_found]).
 	
 %--------------------------------------------------------------------------------------------------------------------------------
-add_receive([],_,[]).
-
-add_receive([LPs],A,[receive_process(A,LPs)]).
-
-add_receive([LPs|Lpss],A,[receive_process(A,LPs)|Ps]) :-
-	add_receive(Lpss,A,Ps).
-
-build_process_result(Context,Fills,A,P) :-
-	add_receive(Fills,A,Fills_with_receive),
-	fill_context(Context,Fills_with_receive,P).
-
+% queue manipulation
+%
+% add_to_queue(A,B,Lambda,M0,M1) holds if M1 is M0 in which the list associated with pair A-B is added with Lambda
+% remove_from_queue(M,A,B,Lambda,M1) holds if M1 is M0 in which the list associated with pair A-B does not contain Lambda
+%
 %--------------------------------------------------------------------------------------------------------------------------------
+check_remaining_list(GMs,[_-G],M) :-
+	check_remaining(GMs,G,M).
+	
+check_remaining_list(GMs,[_-G|LGs],M) :-
+	check_remaining(GMs,G,M),
+	check_remaining_list(GMs,LGs,M).
+
+check_remaining(GMs,G,M) :-
+	member(G-M,GMs).
+	
+check_remaining(GMs,end,M) :- \+member(end,GMs).
+
+check_remaining(GMs,input_type(A,B,Lambda,G),M) :- 
+	\+member(input_type(A,B,Lambda,G)-M,GMs),
+	check_remaining([input_type(A,B,Lambda,G)-M|GMs],G,M).
+
+check_remaining(GMs,output_type(A,B,[Lambda-G]),M) :- 
+	\+member(output_type(A,B,[Lambda-G])-M,GMs),
+	get_assoc(A-B, M,Little_queue),%side condition verification
+	append(Little_queue, [Lambda], [Lambda | Little_queue_prime]),
+	put_assoc(A-B, M, Little_queue_prime, M_prime),
+	check_remaining_list([output_type(A,B,[Lambda-G])-M|GMs],[Lambda-G],M_prime).
+
+check_remaining(GMs,output_type(A,B,LGs),M) :-
+	\+member(output_type(A,B,LGs)-M,GMs),
+	get_assoc(A-B, M,[]),%side condition verification
+	check_remaining_list([output_type(A,B,LGs)-M|GMs],LGs,M).
+
+check_remaining(GMs,output_type(A,B,LGs),M) :- 
+	\+member(output_type(A,B,LGs)-M,GMs),
+	\+get_assoc(A-B, M,_),%side condition verification
+	check_remaining_list([output_type(A,B,LGs)-M|GMs],LGs,M).
+
+%----------------------------------------------------------------
+read_list(GMs,[_-G],M) :-
+	read_queue(GMs,G,M).
+	
+read_list(GMs,[_-G|LGs],M) :-
+	read_queue(GMs,G,M),
+	read_list(GMs,LGs,M).
+
+read_queue(_,_,M) :- empty_assoc(M).
+
+read_queue(GMs,input_type(A,B,Lambda,G),M) :-	
+	\+member(input_type(A,B,Lambda,G)-M,GMs),
+	remove_from_queue(M,A,B,Lambda,M_prime),
+	read_queue([input_type(A,B,Lambda,G)-M|GMs],G,M_prime).
+
+read_queue(GMs,input_type(A,B,Lambda,G),M) :-
+	\+member(input_type(A,B,Lambda,G)-M,GMs),
+	read_queue([input_type(A,B,Lambda,G)-M|GMs],G,M).
+	
+read_queue(GMs,output_type(A,B,LGs),M) :-
+	\+member(output_type(A,B,LGs)-M,GMs),
+	read_list([output_type(A,B,LGs)-M|GMs],LGs,M).
+
+%----------------------------------------------------------------
+read_list_infinite(Gs,[_-G],M) :-
+	read_queue_infinite(Gs,G,M).
+	
+read_list_infinite(Gs,[_-G|LGs],M) :-
+	read_queue_infinite(Gs,G,M),
+	read_list_infinite(Gs,LGs,M).
+
+%----------------------------------------------------------------
+read_queue_infinite(Gs,G,M) :- 
+	member(G,Gs),
+	read_queue([],G,M).
+
+read_queue_infinite(_,_,M) :- empty_assoc(M).
+
+read_queue_infinite(Gs,input_type(A,B,Lambda,G),M) :-	
+	\+member(input_type(A,B,Lambda,G),Gs),
+	read_queue_infinite([input_type(A,B,Lambda,G)|Gs],G,M).
+
+read_queue_infinite(Gs,input_type(A,B,Lambda,G),M) :-
+	\+member(input_type(A,B,Lambda,G),Gs),
+	read_queue_infinite([input_type(A,B,Lambda,G)|Gs],G,M).
+	
+read_queue_infinite(Gs,output_type(A,B,LGs),M) :-
+	\+member(output_type(A,B,LGs),Gs),
+	read_list([output_type(A,B,LGs)|Gs],LGs,M).
+
+%----------------------------------------------------------------
 add_to_queue(A,B,Lambda,M0,M1) :-
 	get_assoc(A-B, M0, Queue0),
 	append(Queue0,[Lambda],Queue1),
@@ -311,9 +414,7 @@ add_to_queue(A,B,Lambda,M0,M1) :-
 add_to_queue(A,B,Lambda,M0,M1) :-
 	put_assoc(A-B, M0,[Lambda], M1).
 
-
-%--------------------------------------------------------------------------------------------------------------------------------
-
+%----------------------------------------------------------------
 remove_from_queue(M,A,B,Lambda,M1) :-
 	get_assoc(A-B, M,[Lambda]),!,
 	del_assoc(A-B, M, [Lambda], M1),!.
@@ -322,15 +423,19 @@ remove_from_queue(M,A,B,Lambda,M1) :-
 	get_assoc(A-B, M,[Lambda|Tail]),!,
 	put_assoc(A-B, M, Tail, M1).
 
-
+%--------------------------------------------------------------------------------------------------------------------------------add_if_not_present(GP_found,G,P,GP_found_modified) :-
+% projection
+%
+% projection(G,A,P) holds if P is the projection of G on participant A
+% projection(GP_found,G,A,P) auxiliary predicate for the one above implementing projection with loop detection. GP_found is the list of already encountered global types
+%
 %--------------------------------------------------------------------------------------------------------------------------------
-
 add_if_not_present(GP_found,G,P,GP_found_modified) :-
 	assoc_to_keys(GP_found,Gs_found),
 	\+member(G,Gs_found),
 	put_assoc(G,GP_found,P,GP_found_modified).
 
-%--------------------------------------------------------------------------------------------------------------------------------
+%----------------------------------------------------------------
 projection_list(GP_found,[Lambda-G],A,[Lambda-P]):-
 	projection(GP_found,G,A,P),!.
 
@@ -338,8 +443,7 @@ projection_list(GP_found,[Lambda-G|LGs],A,[Lambda-P|LPs]) :-
 	projection(GP_found,G,A,P),!,
 	projection_list(GP_found,LGs,A,LPs),!.	
 
-%--------------------------------------------------------------------------------------------------------------------------------
-
+%----------------------------------------------------------------
 projection(GP_found,G,_,P) :-
 	get_assoc(G,GP_found,P).
 	
@@ -391,30 +495,17 @@ projection(GP_found,input_type(A,B,Lambda,G),C,P) :-
 	player(input_type(A,B,Lambda,G),C),
 	projection(GP_found_modified,G,C,P).
 
-
-%--------------------------------------------------------------------------------------------------------------------------------
-
+%----------------------------------------------------------------
 projection(G,A,P) :- 
 	empty_assoc(GP_found),
 	projection(GP_found,G,A,P).
 	
 %--------------------------------------------------------------------------------------------------------------------------------
-
-label_list([]).
-label_list(Lambdas) :-
-	maplist(label,Lambdas).
-
-%--------------------------------------------------------------------------------------------------------------------------------
-
-participant_pair(A-B) :-
-	participant_name(A),
-	participant_name(B).
-
-%--------------------------------------------------------------------------------------------------------------------------------
-
-
+% process preorder
+%
+% process_preorder(P,Q) holds if P <= Q
+%
 %--------------------------------------------------------------------------------------------------------------------------------	
-
 process_preorder_list([Lambda-P],LQs,_) :-
 	member(Lambda-Q,LQs),
 	process_preorder(P,Q),!.
@@ -431,8 +522,7 @@ process_preorder_list([Lambda-_|LPs],LQs,Lambdas) :-
 	\+member(Lambda-_,LQs),
 	process_preorder_list(LPs,LQs,Lambdas),!.
 
-%--------------------------------------------------------------------------------------------------------------------------------
-
+%----------------------------------------------------------------
 process_preorder(send_process(A,LPs),send_process(A,LQs)) :-
   pairs_keys(LPs,L1s),
   pairs_keys(LQs,L2s),
@@ -448,16 +538,24 @@ process_preorder(receive_process(A,LPs),receive_process(A,LQs)) :-
 process_preorder(zero,zero).
 
 %--------------------------------------------------------------------------------------------------------------------------------
-
+% queries
+%
+% typing(N,G-M) holds if network N is well-typed with respect to global type G and queue M
+% project_net(N,G-Q) holds if in network N each processes P associated with participant A is <= of the projection of G on A
+% bounded(G) holds if G is bounded
+% io_match(G,M) holds if G is IO-Matching with respect to the queue M
+% well_formdness(G,M) holds if G is well-formed with respect to the queue M
+% projection_defined_all_players(G) holds if for G projection is defined for all the players
+%
 %--------------------------------------------------------------------------------------------------------------------------------
-
 typing([A-P,B-Q|APs]-M,G-M) :-
 	queue(M),
 	project_net([A-P,B-Q|APs],G-M),
 	pairs_keys([A-P,B-Q|APs],As),!,
 	players(G,Bs),
 	subset(Bs,As).
-
+	
+%----------------------------------------------------------------
 project_net([A-P],G-_) :-
 	projection(G,A,P_first),
 	process_preorder(P,P_first).
@@ -467,8 +565,7 @@ project_net([A-P|APs],G-M) :-
 	process_preorder(P,P_first),
 	project_net(APs,G-M).
 	
-%--------------------------------------------------------------------------------------------------------------------------------	
-	
+%----------------------------------------------------------------	
 bounded(G) :-
 	players(G,As),!,
 	bounded_list(G,As).
@@ -480,8 +577,7 @@ bounded_list(G,[A|As]) :-
 	all_finite_depth(G,A),!,
 	bounded_list(G,As).
 
-%--------------------------------------------------------------------------------------------------------------------------------	
-
+%----------------------------------------------------------------	
 io_match_list(GMs,A,B,[Lambda-G],M) :-
 	add_to_queue(A,B,Lambda,M,M1),
 	io_match(GMs,G,M1).
@@ -491,30 +587,11 @@ io_match_list(GMs,A,B,[Lambda-G|LGs],M) :-
 	io_match(GMs,G,M1),
 	io_match_list(GMs,A,B,LGs,M).
 
-optional(A-B, M, Lambdas1) :-
-	get_assoc(A-B, M, Lambdas1).
-
-optional(_, _, []).
-
-check_subset_queue(M,[],MM_prime,M_prime_0,M_prime) :-
-	empty_assoc(M),
-	empty_assoc(MM_prime),
-	empty_assoc(M_prime_0),
-	empty_assoc(M_prime).
-
-check_subset_queue(M,[A-B],MM_prime,M_prime_0,M_prime) :-
-	optional(A-B, M, Lambdas1),
-	get_assoc(A-B, MM_prime, Lambdas2),
-	append(Lambdas1, Lambdas_prime, Lambdas2),
-	put_assoc(A-B, M_prime_0, Lambdas_prime, M_prime).
-
-check_subset_queue(M,[A-B|ABs],MM_prime,M_prime_0,Res) :-
-	optional(A-B, M, Lambdas1),
-	get_assoc(A-B, MM_prime, Lambdas2),
-	append(Lambdas1, Lambdas_prime, Lambdas2),
-	put_assoc(A-B, M_prime_0, Lambdas_prime, M_prime_1),
-	check_subset_queue(M,ABs,MM_prime,M_prime_1,Res).
-
+%----------------------------------------------------------------
+io_match(G,M_Pairs) :-
+	list_to_assoc(M_Pairs,M_assoc),
+	io_match([],G,M_assoc).
+	
 io_match(GMs,G,MM_prime) :-
 	member(G-M,GMs),
 	assoc_to_keys(MM_prime, ABs),
@@ -538,17 +615,39 @@ io_match(GMs,output_type(A,B,LGs),M) :-
 	\+member(output_type(A,B,LGs)-_,GMs),
 	io_match_list([output_type(A,B,LGs)-M|GMs],A,B,LGs,M).
 
-io_match(G,M_Pairs) :-
-	list_to_assoc(M_Pairs,M_assoc),
-	io_match([],G,M_assoc).
+%----------------------------------------------------------------
+optional(A-B, M, Lambdas1) :-
+	get_assoc(A-B, M, Lambdas1).
 
+optional(_, _, []).
+
+%----------------------------------------------------------------
+check_subset_queue(M,[],MM_prime,M_prime_0,M_prime) :-
+	empty_assoc(M),
+	empty_assoc(MM_prime),
+	empty_assoc(M_prime_0),
+	empty_assoc(M_prime).
+
+check_subset_queue(M,[A-B],MM_prime,M_prime_0,M_prime) :-
+	optional(A-B, M, Lambdas1),
+	get_assoc(A-B, MM_prime, Lambdas2),
+	append(Lambdas1, Lambdas_prime, Lambdas2),
+	put_assoc(A-B, M_prime_0, Lambdas_prime, M_prime).
+
+check_subset_queue(M,[A-B|ABs],MM_prime,M_prime_0,Res) :-
+	optional(A-B, M, Lambdas1),
+	get_assoc(A-B, MM_prime, Lambdas2),
+	append(Lambdas1, Lambdas_prime, Lambdas2),
+	put_assoc(A-B, M_prime_0, Lambdas_prime, M_prime_1),
+	check_subset_queue(M,ABs,MM_prime,M_prime_1,Res).
+
+%----------------------------------------------------------------
 well_formdness(G,M) :-
 	bounded(G),
 	projection_defined_all_players(G),
 	io_match(G,M).
 	
-/*-------------------------------------------------------------------------------------------------------------*/
-
+%----------------------------------------------------------------
 projection_defined_all_players(G) :-
 	players(G,As),!,
 	projection_defined_all_players_list(G,As).
@@ -559,89 +658,3 @@ projection_defined_all_players_list(G,[A]) :-
 projection_defined_all_players_list(G,[A|As]) :-
 	projection(G,A,_),!,
 	projection_defined_all_players_list(G,As).
-
-/*-------------------------------------------------------------------------------------------------------------*/
-check_remaining_list(GMs,[_-G],M) :-
-	check_remaining(GMs,G,M).
-	
-check_remaining_list(GMs,[_-G|LGs],M) :-
-	check_remaining(GMs,G,M),
-	check_remaining_list(GMs,LGs,M).
-
-check_remaining(GMs,G,M) :-
-	member(G-M,GMs).
-	
-check_remaining(GMs,end,M) :- \+member(end,GMs).
-
-check_remaining(GMs,input_type(A,B,Lambda,G),M) :- 
-	\+member(input_type(A,B,Lambda,G)-M,GMs),
-	check_remaining([input_type(A,B,Lambda,G)-M|GMs],G,M).
-
-check_remaining(GMs,output_type(A,B,[Lambda-G]),M) :- 
-	\+member(output_type(A,B,[Lambda-G])-M,GMs),
-	get_assoc(A-B, M,Little_queue),%side condition verification
-	append(Little_queue, [Lambda], [Lambda | Little_queue_prime]),
-	put_assoc(A-B, M, Little_queue_prime, M_prime),
-	check_remaining_list([output_type(A,B,[Lambda-G])-M|GMs],[Lambda-G],M_prime).
-
-check_remaining(GMs,output_type(A,B,LGs),M) :-
-	\+member(output_type(A,B,LGs)-M,GMs),
-	get_assoc(A-B, M,[]),%side condition verification
-	check_remaining_list([output_type(A,B,LGs)-M|GMs],LGs,M).
-
-check_remaining(GMs,output_type(A,B,LGs),M) :- 
-	\+member(output_type(A,B,LGs)-M,GMs),
-	\+get_assoc(A-B, M,_),%side condition verification
-	check_remaining_list([output_type(A,B,LGs)-M|GMs],LGs,M).
-
-
-read_list(GMs,[_-G],M) :-
-	read_queue(GMs,G,M).
-	
-read_list(GMs,[_-G|LGs],M) :-
-	read_queue(GMs,G,M),
-	read_list(GMs,LGs,M).
-
-read_queue(_,_,M) :- empty_assoc(M).
-
-read_queue(GMs,input_type(A,B,Lambda,G),M) :-	
-	\+member(input_type(A,B,Lambda,G)-M,GMs),
-	remove_from_queue(M,A,B,Lambda,M_prime),
-	read_queue([input_type(A,B,Lambda,G)-M|GMs],G,M_prime).
-
-read_queue(GMs,input_type(A,B,Lambda,G),M) :-
-	\+member(input_type(A,B,Lambda,G)-M,GMs),
-	read_queue([input_type(A,B,Lambda,G)-M|GMs],G,M).
-	
-read_queue(GMs,output_type(A,B,LGs),M) :-
-	\+member(output_type(A,B,LGs)-M,GMs),
-	read_list([output_type(A,B,LGs)-M|GMs],LGs,M).
-
-%--------------------------------------------------------------------------------------------------------------------------------
-
-read_list_infinite(Gs,[_-G],M) :-
-	read_queue_infinite(Gs,G,M).
-	
-read_list_infinite(Gs,[_-G|LGs],M) :-
-	read_queue_infinite(Gs,G,M),
-	read_list_infinite(Gs,LGs,M).
-
-read_queue_infinite(Gs,G,M) :- 
-	member(G,Gs),
-	read_queue([],G,M).
-
-read_queue_infinite(_,_,M) :- empty_assoc(M).
-
-read_queue_infinite(Gs,input_type(A,B,Lambda,G),M) :-	
-	\+member(input_type(A,B,Lambda,G),Gs),
-	read_queue_infinite([input_type(A,B,Lambda,G)|Gs],G,M).
-
-read_queue_infinite(Gs,input_type(A,B,Lambda,G),M) :-
-	\+member(input_type(A,B,Lambda,G),Gs),
-	read_queue_infinite([input_type(A,B,Lambda,G)|Gs],G,M).
-	
-read_queue_infinite(Gs,output_type(A,B,LGs),M) :-
-	\+member(output_type(A,B,LGs),Gs),
-	read_list([output_type(A,B,LGs)|Gs],LGs,M).
-
-%--------------------------------------------------------------------------------------------------------------------------------
