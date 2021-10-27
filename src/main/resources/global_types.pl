@@ -15,7 +15,7 @@
 :- coinductive process_preorder/2.
 
 %--------------------------------------------------------------------------------------------------------------------------------
-% auxiliary predicates
+% auxiliary functions
 %
 % participant_name(A) holds if A is valid participant name, that is, a string
 % label(Lambda) holds if Lambda is valid label, that is, a string
@@ -45,7 +45,7 @@ pair_domain(X,Y,Left-Right):-
 	call(Y,Right).
 
 %--------------------------------------------------------------------------------------------------------------------------------
-% values checking predicates
+% entities
 %
 % global_type(G) holds if G is a global type
 % context(Ctx) holds if Ctx is a context
@@ -107,9 +107,12 @@ network([A1-P1,A2-P2|APs]-M) :-
 	queue(M).
 
 %--------------------------------------------------------------------------------------------------------------------------------
-% predicates implementing operations on contexts
+% operations on contexts
+%
 % fill_context(Ctx,Ps,P) holds if replacing holes in Ctx as obtained in a DFS with processes Ps we obtain P
-% check_branch(Ps,A,Lambda,LPs) holds if 
+% check_each_process(Ctx,A,Lambdas,Ps,List) checks that all the processes Ps can be obtained by filling the holes of Ctx and that the fillings for the i_th process in Ps starts with an input from A and the i_th label in Lambdas
+% build_context(LP1s,LP2s,A,Lambda1,Lambda2,LCtxs) scans the first two processes P1 and P2 checking they are equal apart from subterms which start with an input from the sender A and labels Lambda1 and Lambda2 respectively. Ctx will contain the context corresponding to the common part among the two processes, with holes in place of their different subterms 
+%
 %--------------------------------------------------------------------------------------------------------------------------------
 
 fill_context(Ctx,Ps,P) :- fill_aux(Ctx,Ps,P,[]),!.
@@ -160,24 +163,18 @@ check_each_process(Context,A,[Lambda|Lambdas],[P|Ps],LPss) :-
 	check_each_process(Context,A,Lambdas,Ps,LPss_Tail),
 	\+member(Lambda,Lambdas),
 	add_branch(Res,LPss_Tail,LPss).
-
+%----------------------------------------------------------------
 add_branch([LP],[Head],[[LP|Head]]).
 
 add_branch([LP|LPs_single],[Head|LPs_multi],[[LP|Head]|LPs_All]) :-
 	add_branch(LPs_single,LPs_multi,LPs_All).
 
+%----------------------------------------------------------------
 cons_choice([Lambda-P],[[Lambda-P]]).
 
 cons_choice([Lambda-P|LPs],[[Lambda-P]|LPss]) :- cons_choice(LPs,LPss).
 
-%--------------------------------------------------------------------------------------------------------------------------------
-build_context_list([L-P1],[L-P2],A,Lambda1,Lambda2,[L-Context]) :-
-	build_context(P1,P2,A,Lambda1,Lambda2,Context).
-
-build_context_list([L-P1|LP1s],[L-P2|LP2s],A,Lambda1,Lambda2,[L-Context|Contexts]) :-
-	build_context(P1,P2,A,Lambda1,Lambda2,Context),
-	build_context_list(LP1s,LP2s,A,Lambda1,Lambda2,Contexts).
-
+%----------------------------------------------------------------
 build_context(zero,zero,_,_,_,zero).
 
 build_context(receive_process(A,[Lambda1-_]),receive_process(A,[Lambda2-_]), A,Lambda1,Lambda2,hole) :-
@@ -188,13 +185,22 @@ build_context(receive_process(B,LP1),receive_process(B,LP2),A,Lambda1,Lambda2,re
 
 build_context(send_process(B,LP1),send_process(B,LP2),A,Lambda1,Lambda2,send_process(B,Context)) :-
   build_context_list(LP1,LP2,A,Lambda1,Lambda2,Context).
-  
+
+build_context_list([L-P1],[L-P2],A,Lambda1,Lambda2,[L-Context]) :-
+	build_context(P1,P2,A,Lambda1,Lambda2,Context).
+
+build_context_list([L-P1|LP1s],[L-P2|LP2s],A,Lambda1,Lambda2,[L-Context|Contexts]) :-
+	build_context(P1,P2,A,Lambda1,Lambda2,Context),
+	build_context_list(LP1s,LP2s,A,Lambda1,Lambda2,Contexts).
  
+%--------------------------------------------------------------------------------------------------------------------------------
+% player operations
+% player(G,A) holds if A is a player in G
+%
 %--------------------------------------------------------------------------------------------------------------------------------
 player(G,A) :- \+not_player(G,A).
 
-%--------------------------------------------------------------------------------------------------------------------------------
-
+%----------------------------------------------------------------
 not_player_list([_-G],A) :- 
 	not_player(G,A).
 
