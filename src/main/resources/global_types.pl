@@ -196,6 +196,7 @@ build_context_list([L-P1|LP1s],[L-P2|LP2s],A,Lambda1,Lambda2,[L-Context|Contexts
 %--------------------------------------------------------------------------------------------------------------------------------
 % player operations
 % player(G,A) holds if A is a player in G
+% players(G,As) holds if As is the list of participants of G
 %
 %--------------------------------------------------------------------------------------------------------------------------------
 player(G,A) :- \+not_player(G,A).
@@ -217,10 +218,36 @@ not_player(input_type(_,B,_,G), A) :-
 	not_player(G,A).
 	
 not_player(end,_).
+
+%----------------------------------------------------------------
+players(G,As) :- players([],G,Res),sort(Res,Res_no_repetitions),permutation(Res_no_repetitions,As).
+
+players(Gs,G,[]) :-
+	member(G,Gs).
+
+players(Gs,output_type(A,B,LGs),[B|Res]) :-
+	\+member(output_type(A,B,LGs),Gs),
+	players_list([output_type(A,B,LGs)|Gs],LGs,Res).
+	
+players(Gs,input_type(A,B,Lambda,G),[A|Res]) :-
+	\+member(input_type(A,B,Lambda,G),Gs),
+	players([input_type(A,B,Lambda,G)|Gs],G,Res).
+	
+players(_,end,[]).
+
+players_list(Gs,[_-G],Res) :-
+	players(Gs,G,Res).
+
+players_list(Gs,[_-G|LGs],Res_tot) :-
+	players(Gs,G,Res),
+	players_list(Gs,LGs,Res_remaining),
+	append(Res,Res_remaining,Res_tot).
+	
 %--------------------------------------------------------------------------------------------------------------------------------
-
-
-
+%
+%
+%
+%
 %--------------------------------------------------------------------------------------------------------------------------------
 
 all_finite_depth(output_type(A,B,LGs),C) :-
@@ -422,28 +449,6 @@ process_preorder(zero,zero).
 
 %--------------------------------------------------------------------------------------------------------------------------------
 
-players(Gs,G,[]) :-
-	member(G,Gs).
-
-players(Gs,output_type(A,B,LGs),[B|Res]) :-
-	\+member(output_type(A,B,LGs),Gs),
-	players_list([output_type(A,B,LGs)|Gs],LGs,Res).
-	
-players(Gs,input_type(A,B,Lambda,G),[A|Res]) :-
-	\+member(input_type(A,B,Lambda,G),Gs),
-	players([input_type(A,B,Lambda,G)|Gs],G,Res).
-	
-players(_,end,[]).
-
-players_list(Gs,[_-G],Res) :-
-	players(Gs,G,Res).
-
-players_list(Gs,[_-G|LGs],Res_tot) :-
-	players(Gs,G,Res),
-	players_list(Gs,LGs,Res_remaining),
-	append(Res,Res_remaining,Res_tot).
-	
-players(G,As) :- players([],G,Res),sort(Res,Res_no_repetitions),permutation(Res_no_repetitions,As).
 %--------------------------------------------------------------------------------------------------------------------------------
 
 typing([A-P,B-Q|APs]-M,G-M) :-
