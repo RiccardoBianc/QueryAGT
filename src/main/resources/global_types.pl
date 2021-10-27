@@ -48,7 +48,7 @@ pair_domain(X,Y,Left-Right):-
 % values checking predicates
 %
 % global_type(G) holds if G is a global type
-% context(C) holds if C is a context
+% context(Ctx) holds if Ctx is a context
 % queue(Q) holds if Q is a queue
 % process(P) holds if P is a process
 % network(N) holds if N is a network
@@ -107,7 +107,10 @@ network([A1-P1,A2-P2|APs]-M) :-
 	queue(M).
 
 %--------------------------------------------------------------------------------------------------------------------------------
-	
+% predicates implementing operations on contexts
+% fill_context(Ctx,Ps,P) holds if replacing holes in Ctx as obtained in a DFS with processes Ps we obtain P
+% check_branch(Ps,A,Lambda,LPs) holds if 
+%--------------------------------------------------------------------------------------------------------------------------------
 
 fill_context(Ctx,Ps,P) :- fill_aux(Ctx,Ps,P,[]),!.
 
@@ -129,13 +132,13 @@ fill_aux_list([L-Ct|LCs],Ps,[L-P|LPs],Remaining_modified) :-
 	fill_aux(Ct,Ps,P,Remaining),!, 
 	fill_aux_list(LCs,Remaining,LPs,Remaining_modified),!.
 
-%--------------------------------------------------------------------------------------------------------------------------------
-
+%----------------------------------------------------------------
 check_branch([receive_process(A,[Lambda-P])],A,Lambda,[Lambda-P]).
 
 check_branch([receive_process(A,[Lambda-P])|Ps],A,Lambda,[Lambda-P|Res]) :-
 	check_branch(Ps,A,Lambda,Res).
 
+%----------------------------------------------------------------
 check_each_process(Context,_,[_],[P],[]) :-
 	process(Context),
 	fill_context(Context,[],P).
