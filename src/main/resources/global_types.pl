@@ -15,7 +15,7 @@
 :- coinductive process_preorder/2.
 
 %--------------------------------------------------------------------------------------------------------------------------------
-% auxiliary functions
+% auxiliary predicates
 %
 % participant_name(A) holds if A is valid participant name, that is, a string
 % label(Lambda) holds if Lambda is valid label, that is, a string
