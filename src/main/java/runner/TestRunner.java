@@ -45,14 +45,15 @@ public class TestRunner
 			     }
 		}
 	
-      Scanner scanner = new Scanner(System.in);
-      scanner.useDelimiter("@");
+     
     String test = "";
 	CharStream inputCode = null;
 	Interpreter interpreter = new Interpreter("");
 	while(true){
-	System.out.println("Insert test code. Ending char must be '@'. Press only 'exit@' to exit.");
+	System.out.println("Insert test code. Ending char must be ';;'. Press only 'exit@' to exit.");
 	  try {
+		  Scanner scanner = new Scanner(System.in);
+	      scanner.useDelimiter(";;");
 	    	inputCode = CharStreams.fromString(scanner.next());
 	    	System.out.println(inputCode);
 
