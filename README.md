@@ -1,6 +1,6 @@
 # QueryAGT
 
-This is the implementation of the global types formalism for asynchronous sessions described in [1]. 
+This is a simple tool to experiment with the global types formalism for asynchronous sessions described in [1]. 
 Details on the implementation can be found in [2]. 
 1. Francesco Dagnino, Paola Giannini and Mariangiola Dezani-Ciancaglini (2021). 
 [Deconfined global types for asynchronous sessions](https://link.springer.com/chapter/10.1007/978-3-030-78142-2_3). 
