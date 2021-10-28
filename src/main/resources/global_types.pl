@@ -570,8 +570,7 @@ bounded(G) :-
 	players(G,As),!,
 	bounded_list(G,As).
 
-bounded_list(G,[A]) :-
-	all_finite_depth(G,A),!.
+bounded_list(G,[]). 
 
 bounded_list(G,[A|As]) :-
 	all_finite_depth(G,A),!,
