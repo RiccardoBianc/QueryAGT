@@ -51,7 +51,7 @@ pair_domain(X,Y,Left-Right):-
 % context(Ctx) holds if Ctx is a context
 % queue(Q) holds if Q is a queue
 % process(P) holds if P is a process
-% session(N) holds if N is a session
+% session(S) holds if S is a session
 % 
 %--------------------------------------------------------------------------------------------------------------------------------
 global_type(output_type(A,B,[Lambda-G|LGs])) :- 
