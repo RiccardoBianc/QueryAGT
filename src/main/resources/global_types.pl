@@ -548,10 +548,10 @@ process_preorder(zero,zero).
 % projection_defined_all_players(G) holds if for G projection is defined for all the players
 %
 %--------------------------------------------------------------------------------------------------------------------------------
-typing([A-P,B-Q|APs]-M,G-M) :-
+typing([A-P|APs]-M,G-M) :-
 	queue(M),
-	project_net([A-P,B-Q|APs],G-M),
-	pairs_keys([A-P,B-Q|APs],As),!,
+	project_net([A-P|APs],G-M),
+	pairs_keys([A-P|APs],As),!,
 	players(G,Bs),
 	subset(Bs,As).
 	

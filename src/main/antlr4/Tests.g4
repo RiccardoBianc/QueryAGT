@@ -145,7 +145,7 @@ queue
 	;
 
 session
-	: ( '|' participant '[' process ']')+ '|' queue
+	: participant '[' process ']' ( '|' participant '[' process ']')* '|' queue
 	| variableSession
 	;
 
