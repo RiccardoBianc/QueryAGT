@@ -1,6 +1,7 @@
 # Supported predicates
-File ```global_types.pl``` contains the core part of the tool, that is, the implementation of the definitions as defined in the inspiring papers.
-The more important predicates are:
+
+File ```global_types.pl``` contains the core of the tool: the SWI-Prolog implementation of relevant judgements on global types, processes, sessions and queues. 
+Most important predicates provded by this file are the following: 
 
 * Auxiliary predicates
   * ```participant_name(A)```
