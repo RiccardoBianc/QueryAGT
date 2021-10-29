@@ -14,7 +14,7 @@ Most important predicates provded by this file are the following:
   * ```context(Ctx)```
   * ```queue(Q)```
   * ```process(P)```
-  * ```session(N)```
+  * ```session(S)```
 * Operations on contexts
   * ```fill_context(Ctx,Ps,P)```
   * ```check_each_process(Ctx,A,Lambdas,Ps,List)```
