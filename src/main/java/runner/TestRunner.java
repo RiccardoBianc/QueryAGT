@@ -59,7 +59,7 @@ public class TestRunner
 				return;
 			}
 			catch (Throwable t) {
-				System.out.println("Error in parsing the file");
+				System.out.println("Generic error");
 				return;
 			}
 			
@@ -90,7 +90,7 @@ public class TestRunner
 					continue;
 				}
 				catch(Throwable e) {
-					System.out.println(e.getMessage());
+					System.out.println("Generic error");
 					continue;
 				}
 			}
@@ -105,14 +105,14 @@ public class TestRunner
 		lexer.addErrorListener(new BaseErrorListener()  {
 	        @Override
 	        public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
-	            throw new RuntimeException("Lexer error");
+	            throw new QueryAGTException("Lexer error");
 	        }
 	    });
 		lexer.removeErrorListener(ConsoleErrorListener.INSTANCE);
 		parser.addErrorListener(new BaseErrorListener()  {
 	        @Override
 	        public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
-	            throw new RuntimeException("Parser error");
+	            throw new QueryAGTException("Parser error");
 	        }
 	    });
 		parser.removeErrorListener(ConsoleErrorListener.INSTANCE);
