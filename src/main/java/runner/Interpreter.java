@@ -1,22 +1,17 @@
 package runner;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.Token;
-import org.antlr.v4.runtime.TokenSource;
-import org.antlr.v4.runtime.misc.Interval;
-import org.antlr.v4.runtime.tree.ParseTree;
+import javax.annotation.processing.FilerException;
 
+import org.antlr.v4.runtime.tree.ParseTree;
 import InputParser.TestsParser.All_proj_existsContext;
 import InputParser.TestsParser.BoundnessContext;
 import InputParser.TestsParser.DeclarationContext;
@@ -30,24 +25,21 @@ import InputParser.TestsParser.TypingContext;
 import InputParser.TestsParser.Well_formdnessContext;
 
 
-
 public class Interpreter extends InputParser.TestsBaseVisitor<Void> {
 
-	private HashMap<String, List<String>> environment = new HashMap<>();
-	private HashMap<String, String> codes = new HashMap<>();
+
+	private HashMap<String, List<String>> environment = new HashMap<>(); /*In this hashmap keys are the types of entities and values the variables names. It is the execution environment*/
+	private HashMap<String, String> codes = new HashMap<>(); /*In this hasmap a key is the variable name, a value is the prolog code representing the associated entity*/
 
 	private final String PROCESS = "Process";
 	private final String TYPE = "GlobalType";
 	private final String QUEUE = "Queue";
-	private final String NETWORK = "Session";
-	String code_final;
-	public HashMap<String, List<String>> test_map = new HashMap<>();
-	int projectionsCounter = 0;
-	String space;
-	int countPassed=0;
-	int total=0;
-	
-	private void createEnv() {
+	private final String NETWORK = "Session"; /*These string are the type names*/
+	String indentationSpace; /*This string is used to adapt indentation to the mode*/
+	int countPassed=0; /*Number of passed queries*/
+	int total=0; /*Number of total queries*/
+
+	private void createEnv() { /*This function initialize environment and codes*/
 		HashMap<String, List<String>> map = new HashMap<>();
 		map.put(QUEUE, new ArrayList<>());
 		map.put(PROCESS, new ArrayList<>());
@@ -56,35 +48,60 @@ public class Interpreter extends InputParser.TestsBaseVisitor<Void> {
 		this.environment = map;	
 		this.codes = new HashMap<>();
 	}
-	
+
 	public Interpreter(String space) {
 		super();
 		createEnv();
-		this.space = space;
+		this.indentationSpace = space; /*The indentation is different in interactive and batch mode*/
 	}
 
+	public HashMap<String, List<String>> deepCopyEnvironment() {
+		HashMap<String, List<String>> snapshot = new HashMap<String,List<String>>();
+		new HashMap<String, List<String>>();
+		for (String key : this.environment.keySet()) {
+			List<String> valuesSnapshot = new ArrayList<String>();
+			for (String value : this.environment.get(key)) {
+				valuesSnapshot.add(new String(value));
+			}
+			snapshot.put(key, valuesSnapshot);
+		}
+		return snapshot;
+	}
+	
 	@Override
 	public Void visitLet(LetContext ctx) {
 		List<DeclarationContext> declarations = ctx.declaration();
 		List<String> declared = new ArrayList<>();
-		for (InputParser.TestsParser.DeclarationContext decl : declarations) {
-			String type = decl.getChild(0).getText();
-			String var = CodeBuilder.capitaliseVariableName(decl.getChild(1).getText());
-			if(declared.contains(var)) {
-			throw new Error("Multiple variable declaration: variable " + var + " is declared multiple times in the let block");
-			}
+		HashMap<String, List<String>> snapshot = deepCopyEnvironment(); /*Here we save a snapshot of environment*/
+		try {
+			
+			for (InputParser.TestsParser.DeclarationContext decl : declarations) { /*This loop updates the environment with the declarations in input. If some type error is encountered then the environment is restored*/
+				String type = decl.getChild(0).getText();
+				String var = CodeBuilder.capitaliseVariableName(decl.getChild(1).getText());
+				
+				if(declared.contains(var)) { /*In the let block the same variable can not be declared more than one time*/
+					this.environment = snapshot; /*Environment is restored*/
+					throw new QueryAGTException("Multiple variable declaration: variable " + var + " is declared multiple times in the let block");
+				}
+				
 				declared.add(var);
 				List<String> listType = this.environment.get(type);
 				listType.add(var);
-				this.environment.put(type,listType);
+				this.environment.put(type,listType); /*Environment updating*/
+			}
+			
+			CodeBuilder stringConverter = new CodeBuilder(this.environment);
+			for (InputParser.TestsParser.DeclarationContext decl : declarations) {
+				String var = stringConverter.visit(decl.getChild(1)) + " = "; /*CodeBuilder makes typechecking control*/
+				String code = stringConverter.visit(decl) +"\r\n";
+				this.codes.put(var, code);
+			}
 		}
-		CodeBuilder stringConverter = new CodeBuilder(this.environment);
-		for (InputParser.TestsParser.DeclarationContext decl : declarations) {
-			String var = stringConverter.visit(decl.getChild(1)) + " = ";
-			String code = stringConverter.visit(decl) +"\r\n";
-			this.codes.put(var, code);
+		catch(Throwable e) {
+			this.environment = snapshot;
+			throw e;
 		}
-	return null;
+		return null;
 	}
 
 	@Override
@@ -92,53 +109,54 @@ public class Interpreter extends InputParser.TestsBaseVisitor<Void> {
 		CodeBuilder stringConverter = new CodeBuilder(this.environment);
 		String queryCode = stringConverter.visit(ctx);
 		String declarations = "";
-		for (String decl : codes.values()) {
+		for (String decl : codes.values()) { /*This loop builds the declarations prolog code*/
 			declarations += decl + ",";
 		}
-		//declarations = declarations.substring(0, declarations.length() - 1);
 		String converted = ":- include(\"global_types\").\r\n\n\n"
-				+ "test() :- "+declarations+queryCode;
-		converted += ",write(\"PASSED\").\n test() :- write(\"NOT PASSED\").";
+				+ "test() :- "+ 
+				declarations +
+				queryCode +
+				",write(\"PASSED\").\n "
+				+ "test() :- write(\"NOT PASSED\")."; /*This line creates a prolog predicate to execute the test*/
 
-		File tempFile=null;
+
+		File tempFile=null; /*Prolog code is written on a temporary file that is then executed*/
 		try {
 			tempFile = File.createTempFile("prolog", null);
-		    tempFile.deleteOnExit();
-		    
+			tempFile.deleteOnExit();
+
 			BufferedWriter out = new BufferedWriter(new FileWriter(tempFile));
-		    out.write(converted);
-		    out.close();
+			out.write(converted);
+			out.close();
 		}
-		catch (Exception e)
+		catch (Throwable e)
 		{
-			System.out.println(e.getMessage());
-			System.exit(1);
+			throw new QueryAGTException("Error in creating the temporary file containing prolog queries");
 		}
-		
+
 		Runtime cmd = Runtime.getRuntime();
 		try {
-		BufferedReader reader = new BufferedReader(new InputStreamReader(cmd.exec("swipl -s  "+ tempFile.getAbsolutePath() +" -g test -g halt").getInputStream()));
-		String line = "";
-    	System.out.print(space+"Query ");
-	    while ((line = reader.readLine()) != null) {
-	    	QueryContext auxCtx = ctx;
-	    	while(auxCtx.NOT() != null) {
-	    		System.out.print("not ");
-	    		auxCtx = auxCtx.query();
-	    	}
-	    	visit(auxCtx.getChild(0));
-	    	System.out.println(line);
-	    	if(line.equals("PASSED")) {
-	    		countPassed++;
-	    	}
-	    	total++;
-	    }
-	    
+			BufferedReader reader = new BufferedReader(new InputStreamReader(cmd.exec("swipl -s  "+ tempFile.getAbsolutePath() +" -g test -g halt").getInputStream()));
+			String line = "";
+			System.out.print(indentationSpace+"Query ");
+			while ((line = reader.readLine()) != null) {
+				QueryContext auxCtx = ctx;
+				while(auxCtx.NOT() != null) {
+					System.out.print("not ");
+					auxCtx = auxCtx.query();
+				}
+				visit(auxCtx.getChild(0));
+				System.out.println(line);
+				if(line.equals("PASSED")) {
+					countPassed++;
+				}
+				total++;
+			}
+
 
 		}
-		catch(Exception e){
-			System.out.println(e.getMessage());
-			System.exit(1);
+		catch(Throwable e){
+			throw new QueryAGTException("Error in executing swi-prolog interpreter");
 		}
 		return null;
 	}
@@ -210,11 +228,11 @@ public class Interpreter extends InputParser.TestsBaseVisitor<Void> {
 
 	@Override
 	public Void visitProg(InputParser.TestsParser.ProgContext ctx) {
-	    for (int i = 0; i < ctx.test_group().size(); i++) {
+		for (int i = 0; i < ctx.test_group().size(); i++) {
 			System.out.println("I'm executing test group: " + ctx.test_group_name(i).getText());
 			visit(ctx.test_group(i));
 		}
-			
+
 		return null;
 	}
 
@@ -232,69 +250,40 @@ public class Interpreter extends InputParser.TestsBaseVisitor<Void> {
 		createEnv();
 		List<DeclarationContext> declarations = ctx.declaration();
 		List<String> declared = new ArrayList<>();
+		HashMap<String, List<String>> snapshot = deepCopyEnvironment(); /*Here we save a snapshot of environment*/
+		try {
 		for (InputParser.TestsParser.DeclarationContext decl : declarations) {
 			String type = decl.getChild(0).getText();
 			String var = CodeBuilder.capitaliseVariableName(decl.getChild(1).getText());
-			if(declared.contains(var)) {
-			throw new Error("Multiple variable declaration: variable " + var + " is declared multiple times in the let block");
+			
+			if(declared.contains(var)) { /*In the let block the same variable can not be declared more than one time*/
+				this.environment = snapshot; /*Environment is restored*/
+				throw new QueryAGTException("Multiple variable declaration: variable " + var + " is declared multiple times in the let block");
 			}
-				declared.add(var);
-				List<String> listType = this.environment.get(type);
-				listType.add(var);
-				this.environment.put(type,listType);
+			
+			declared.add(var);
+			List<String> listType = this.environment.get(type);
+			listType.add(var);
+			this.environment.put(type,listType);
 		}
 		CodeBuilder stringConverter = new CodeBuilder(this.environment);
+		
 		for (InputParser.TestsParser.DeclarationContext decl : declarations) {
 			String var = stringConverter.visit(decl.getChild(1)) + " = ";
 			String code = stringConverter.visit(decl) +"\r\n";
 			this.codes.put(var, code);
 		}
+		
 		for (QueryContext query : ctx.queries().query()) {
 			visit(query);
 		}
-		
-		
+		}
+		catch(Throwable e) {
+			this.environment = snapshot;
+			throw e;
+		}
 		
 		return null;
-
-/*		
-		CodeBuilder stringConverter = new CodeBuilder();
-		String testCode = stringConverter.visit(ctx);
-
-		String converted = ":- include(\"global_types\").\r\n\n\n"
-				+ "test() :- "+testCode;
-		converted += ",write(\"OK\").\n test() :- write(\"NOT OK\").";
-
-		File tempFile=null;
-		try {
-			tempFile = File.createTempFile("prolog", null);
-		    tempFile.deleteOnExit();
-		    
-			BufferedWriter out = new BufferedWriter(new FileWriter(tempFile));
-		    out.write(converted);
-		    out.close();
-		}
-		catch (Exception e)
-		{
-			System.out.println(e.getMessage());
-			System.exit(1);
-		}
-		
-		Runtime cmd = Runtime.getRuntime();
-		try {
-		BufferedReader reader = new BufferedReader(new InputStreamReader(cmd.exec("swipl -s  "+ tempFile.getAbsolutePath() +" -g test -g halt").getInputStream()));
-		String line = "";
-	    while ((line = reader.readLine()) != null) {
-	        System.out.println(line);
-	    }
-		}
-		catch(Exception e){
-			System.out.println(e.getMessage());
-			System.exit(1);
-		}
-
-		return null;
-*/
 	}
 
 	@Override
