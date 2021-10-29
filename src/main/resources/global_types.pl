@@ -51,7 +51,7 @@ pair_domain(X,Y,Left-Right):-
 % context(Ctx) holds if Ctx is a context
 % queue(Q) holds if Q is a queue
 % process(P) holds if P is a process
-% network(N) holds if N is a network
+% session(N) holds if N is a session
 % 
 %--------------------------------------------------------------------------------------------------------------------------------
 global_type(output_type(A,B,[Lambda-G|LGs])) :- 
@@ -112,8 +112,8 @@ label_list(Lambdas) :-
 	maplist(label,Lambdas).
 	
 %----------------------------------------------------------------
-network([A1-P1,A2-P2|APs]-M) :- 
-	map_from_to(participant_name,process,[A1-P1,A2-P2|APs]),
+session([A1-P1|APs]-M) :- 
+	map_from_to(participant_name,process,[A1-P1|APs]),
 	queue(M).
 
 %--------------------------------------------------------------------------------------------------------------------------------
@@ -540,8 +540,8 @@ process_preorder(zero,zero).
 %--------------------------------------------------------------------------------------------------------------------------------
 % queries
 %
-% typing(N,G-M) holds if network N is well-typed with respect to global type G and queue M
-% project_net(N,G-Q) holds if in network N each processes P associated with participant A is <= of the projection of G on A
+% typing(N,G-M) holds if session N is well-typed with respect to global type G and queue M
+% project_net(N,G-Q) holds if in session N each processes P associated with participant A is <= of the projection of G on A
 % bounded(G) holds if G is bounded
 % io_match(G,M) holds if G is IO-Matching with respect to the queue M
 % well_formdness(G,M) holds if G is well-formed with respect to the queue M
