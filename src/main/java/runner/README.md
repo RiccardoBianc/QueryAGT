@@ -1,6 +1,7 @@
 # Classes
 
-These files contains the implementation of the java part of the tool. In particular they contain the implementation of the java interface to SWI-Prolog.
-* ```TestRunner.java``` contains the class ```TestRunner``` containing the main
-* ```CodeBuilder.java``` contains the implementation of the visitor of the syntax tree that translate the code from query language to SWI-Prolog code
-* ```Interpreter.java``` contains the implementation of the interpreter that execute the queries calling SWI-Prolog
+These classes implement the interpreter of the query language, which generates and executes the corresponding SWI-Prolog code. 
+* ```TestRunner.java```  contains the main method of the interpreter
+* ```CodeBuilder.java``` contains the implementation of the visitor of the syntax tree that translates the code from the query language to SWI-Prolog 
+* ```Interpreter.java``` contains the implementation of the interpreter that execute the generated SWI-Prolog code 
+
