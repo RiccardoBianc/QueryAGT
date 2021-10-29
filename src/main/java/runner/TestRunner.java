@@ -77,7 +77,8 @@ public class TestRunner
 					inputCode = CharStreams.fromString(scanner.next());
 
 					if(inputCode.toString().strip().equals("exit")) {
-						System.out.println("Thank you!");
+						System.out.println(inputCode.toString().strip());
+						System.out.println("Bye!");
 						return;
 					}
 					
@@ -105,14 +106,14 @@ public class TestRunner
 		lexer.addErrorListener(new BaseErrorListener()  {
 	        @Override
 	        public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
-	            throw new QueryAGTException("Lexer error");
+	            throw new QueryAGTException("Invalid symbol");
 	        }
 	    });
 		lexer.removeErrorListener(ConsoleErrorListener.INSTANCE);
 		parser.addErrorListener(new BaseErrorListener()  {
 	        @Override
 	        public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
-	            throw new QueryAGTException("Parser error");
+	            throw new QueryAGTException("Invalid syntax");
 	        }
 	    });
 		parser.removeErrorListener(ConsoleErrorListener.INSTANCE);
