@@ -51,7 +51,6 @@ queries
 query
 	: projection_assert
 	| projection_exists
-	| projection_compute
 	| typing
 	| well_formdness
 	| boundness
@@ -82,10 +81,6 @@ BOUND:
 	'bounded'
 	;
 
-projection_compute
-	: PROJECT global_type ON participant
-	;
-
 projection_assert 
 	: PROJ '('	global_type ',' participant  ')' '==' process
 	;
@@ -96,10 +91,6 @@ projection_exists
 
 ON
 	: 'on'
-	;
-	
-PROJECT
-	: 'project'	
 	;
 	
 NOT

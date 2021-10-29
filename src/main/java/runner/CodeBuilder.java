@@ -152,14 +152,6 @@ public class CodeBuilder extends InputParser.TestsBaseVisitor<String> {
 			}
 		}
 
-	@Override
-	public String visitProjection_compute(InputParser.TestsParser.Projection_computeContext ctx) {
-		int projectionCounter = this.projectionsCounter;
-		this.projectionsCounter++;
-		return "projection("+visit(ctx.global_type())+","+visit(ctx.participant())+",_generatedProcess"+projectionCounter+")";
-	}
-
-	
 	@Override 
 	public String visitAll_proj_exists(InputParser.TestsParser.All_proj_existsContext ctx) { 
 		try {

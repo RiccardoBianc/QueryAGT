@@ -15,7 +15,6 @@ import InputParser.TestsParser.DeclarationContext;
 import InputParser.TestsParser.IomContext;
 import InputParser.TestsParser.LetContext;
 import InputParser.TestsParser.Projection_assertContext;
-import InputParser.TestsParser.Projection_computeContext;
 import InputParser.TestsParser.Projection_existsContext;
 import InputParser.TestsParser.QueryContext;
 import InputParser.TestsParser.TypingContext;
@@ -177,14 +176,6 @@ public class Interpreter extends InputParser.TestsBaseVisitor<Void> {
 
 	@Override
 	public Void visitBoundness(BoundnessContext ctx) {
-		for (ParseTree subEl : ctx.children) {
-			System.out.print(subEl.getText() + " ");
-		}
-		return null;
-	}
-
-	@Override
-	public Void visitProjection_compute(Projection_computeContext ctx) {
 		for (ParseTree subEl : ctx.children) {
 			System.out.print(subEl.getText() + " ");
 		}
