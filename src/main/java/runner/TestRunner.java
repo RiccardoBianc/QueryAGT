@@ -68,15 +68,15 @@ public class TestRunner
 			String test = "";
 			CharStream inputCode = null;
 			Interpreter interpreter = new Interpreter("");
-			System.out.println("Insert test code. Ending char must be ';;'. Press only 'exit@' to exit.");
+			System.out.println("Insert test code. Ending char must be ';;'. Press only 'exit;;' to exit.");
 			while(true){
-				System.out.print(">_");
+				System.out.print("> ");
 				try {
 					Scanner scanner = new Scanner(System.in);
 					scanner.useDelimiter(";;");
 					inputCode = CharStreams.fromString(scanner.next());
 
-					if(inputCode.toString().equals("exit")) {
+					if(inputCode.toString().strip().equals("exit")) {
 						System.out.println("Thank you!");
 						return;
 					}
@@ -90,7 +90,7 @@ public class TestRunner
 					continue;
 				}
 				catch(Throwable e) {
-					System.out.println("Error in parsing");
+					System.out.println(e.getMessage());
 					continue;
 				}
 			}
@@ -102,6 +102,20 @@ public class TestRunner
 		InputParser.TestsLexer lexer = new InputParser.TestsLexer(inputCode);
 		CommonTokenStream tokens = new CommonTokenStream(lexer);
 		parser = new InputParser.TestsParser(tokens);
+		lexer.addErrorListener(new BaseErrorListener()  {
+	        @Override
+	        public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
+	            throw new RuntimeException("Lexer error");
+	        }
+	    });
+		lexer.removeErrorListener(ConsoleErrorListener.INSTANCE);
+		parser.addErrorListener(new BaseErrorListener()  {
+	        @Override
+	        public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
+	            throw new RuntimeException("Parser error");
+	        }
+	    });
+		parser.removeErrorListener(ConsoleErrorListener.INSTANCE);
 		return parser;
 	}
 

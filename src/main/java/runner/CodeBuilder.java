@@ -12,8 +12,6 @@ public class CodeBuilder extends InputParser.TestsBaseVisitor<String> {
 	private final String TYPE = "GlobalType";
 	private final String QUEUE = "Queue";
 	private final String NETWORK = "Session";
-	private String test_name;
-	private String group_name;
 	String code_final;
 	public HashMap<String, List<String>> test_map = new HashMap<>();
 	int projectionsCounter = 0;
