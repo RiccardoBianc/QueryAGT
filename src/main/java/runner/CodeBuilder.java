@@ -4,8 +4,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
-import org.antlr.v4.runtime.tree.ParseTree;
-
 
 public class CodeBuilder extends InputParser.TestsBaseVisitor<String> {
 	
@@ -40,104 +38,16 @@ public class CodeBuilder extends InputParser.TestsBaseVisitor<String> {
 		this.declMap = declMap;
 	}
 
-
-
-
-	@Override 
-	public String visitTest(InputParser.TestsParser.TestContext ctx) {
-		List<InputParser.TestsParser.DeclarationContext> list = ctx.declaration();
-		String res = "";
-		List<String> declared = new ArrayList<>();
-		for (InputParser.TestsParser.DeclarationContext decl : list) {
-			String type = decl.getChild(0).getText();
-			String var = capitaliseVariableName(decl.getChild(1).getText());
-			if(declared.contains(var)) {
-			throw new Error("Multiple variable declaration: variable " + var + " is declared multiple times");
-			}
-				declared.add(var);
-				List<String> listType = this.declMap.get(type);
-				listType.add(var);
-				this.declMap.put(type,listType);
-		}
-		for (InputParser.TestsParser.DeclarationContext decl : list) {
-			res += visit(decl.getChild(1)) + " = ";
-			res += visit(decl.getChild(3)) +",\r\n";
-		}
-		res+= visit(ctx.queries());
-		return res; 
-		
-	}
-	
-	@Override 
-	public String visitProg(InputParser.TestsParser.ProgContext ctx) { 
-		String head = ":- include(\"global_types\").\r\n"
-				+ ":- use_module(library(plunit)).\r\n"
-				+ ":- dynamic test_info/2.\r\n";
-				
-		String redirection = ":- module(user)." 
-				+ "user:message_hook(P, warning, _).\n\n"
-				+ "user:message_hook(P, error, _) :-\n"
-				+ "\tmessage_to_string(P, String),\n"
-				+ "\tnl(),write(String).\n\n"
-				+ "user:message_hook(P, informational, _) :-\n"
-				+ "\tmessage_to_string(P, String),\n"
-				+ "\tnl(),write(String).";
-
-		String tail = "";
-		List<InputParser.TestsParser.Test_group_nameContext> names = ctx.test_group_name();
-		List<InputParser.TestsParser.Test_groupContext> blocks = ctx.test_group();		
-		for (int i = 0; i < blocks.size(); i++) {
-			String groupName = visit(names.get(i));
-			group_name = groupName;
-			tail += "\r\n\r\n:- begin_tests(" + groupName + ").";
-			test_map.put(groupName, new ArrayList<>());
-			tail += visit(blocks.get(i));
-			tail += "\r\n\r\n:- end_tests(" + visit(names.get(i)) + ").\r\n\r\n";
-		} 	
-		code_final = head + tail;
-		return head+redirection+tail;
-	}
 	@Override
 	public String visitTest_group_name(InputParser.TestsParser.Test_group_nameContext ctx) {
 		String var = ctx.TOKEN_IDENTIFIER().getText();
 		return var.substring(0, 1).toLowerCase() + var.substring(1);
 	}
 
-
-	@Override 
-	public String visitTest_group(InputParser.TestsParser.Test_groupContext ctx) { 
-	
-		List<InputParser.TestsParser.TestContext> tests = ctx.test();
-		List<InputParser.TestsParser.Test_nameContext> names = ctx.test_name();
-		String res = "";
-		for (int i = 0; i < tests.size(); i++) {
-			test_name = visit(names.get(i));
-			List<String> group = test_map.get(group_name);
-			group.add(test_name);
-			test_map.put(group_name, group);
-			res += "\r\n\r\ntest(" + test_name + ") :- \r\n\r\n";
-			res += visit(tests.get(i));
-			res += ".";
-		} 
-		
-		return res; 
-	}
-
 	@Override
 	public String visitTest_name(InputParser.TestsParser.Test_nameContext ctx) {
 		String var = ctx.TOKEN_IDENTIFIER().getText();
 		return var.substring(0, 1).toLowerCase() + var.substring(1);	}
-
-	@Override 
-	public String visitQueries(InputParser.TestsParser.QueriesContext ctx) {
-		List<InputParser.TestsParser.QueryContext> queries =  ctx.query();
-		String res = "";
-		for (InputParser.TestsParser.QueryContext query : queries) {
-			res += visit(query) + ",\r\n";
-		}
-		
-		return res.substring(0, res.length() - 3);
-	}
 	
 	
 	@Override
@@ -217,7 +127,7 @@ public class CodeBuilder extends InputParser.TestsBaseVisitor<String> {
 			return "well_formdness("+ type + "," + queue + ")";
 			}
 			catch (Error e) {
-				throw new Error("Well formdness query bad typed");
+				throw new QueryAGTException("Type error in query");
 			}	
 	}
 	
@@ -228,7 +138,7 @@ public class CodeBuilder extends InputParser.TestsBaseVisitor<String> {
 			return "bounded("+ type + ")";
 			}
 			catch (Error e) {
-				throw new Error("Boundness query bad typed");
+				throw new QueryAGTException("Type error in query");
 			}	
 		}
 
@@ -240,7 +150,7 @@ public class CodeBuilder extends InputParser.TestsBaseVisitor<String> {
 			return "io_match("+ type + "," + queue + ")";
 			}
 			catch (Error e) {
-				throw new Error("Iom query bad typed");
+				throw new QueryAGTException("Type error in query");
 			}
 		}
 
@@ -259,7 +169,7 @@ public class CodeBuilder extends InputParser.TestsBaseVisitor<String> {
 			return "projection_defined_all_players("+ type + ")";
 			}
 			catch (Error e) {
-				throw new Error("all-proj-exists query bad typed");
+				throw new QueryAGTException("Type error in query");
 			}		
 		}
 	
@@ -273,7 +183,7 @@ public class CodeBuilder extends InputParser.TestsBaseVisitor<String> {
 			return res;
 			}
 			catch (Error e) {
-				throw new Error("Typing query bad typed");
+				throw new QueryAGTException("Type error in query");
 			}	
 	}
 	
@@ -287,8 +197,7 @@ public class CodeBuilder extends InputParser.TestsBaseVisitor<String> {
 			return res;
 			}
 			catch (Error e) {
-				System.out.println(e.getMessage());
-				throw new Error("");
+				throw new QueryAGTException("Type error in query");
 			}
 		}
 
@@ -302,8 +211,7 @@ public class CodeBuilder extends InputParser.TestsBaseVisitor<String> {
 		return res;
 		}
 		catch (Error e) {
-			System.out.println(e.getMessage() + " olè");
-			throw new Error("");
+			throw new QueryAGTException("Type error in query");
 		}
 		 
 	}
@@ -431,11 +339,11 @@ public class CodeBuilder extends InputParser.TestsBaseVisitor<String> {
 		Set<String> types = this.declMap.keySet();
 		for (String key : types) {
 			if(!key.equals(type) && this.declMap.get(key).contains(var)) {
-				throw new Error("Variable " + var + " has type " + key + " but " + type +" is expected");
+				throw new QueryAGTException("Variable " + var + " has type " + key + " but " + type +" is expected");
 			}
 		}
 		if(!this.declMap.get(type).contains(var)) {
-			throw new Error("Variable " + var +" is not declared");
+			throw new QueryAGTException("Variable " + var +" is not declared");
 		}
 		return var;
 	}
