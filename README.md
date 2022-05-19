@@ -33,7 +33,7 @@ Then run
 
 
 There are two execution modes: the interactive one and the batch one. 
-If no argument is provided, then the tool starts in interactive mode. 
+If no argument is provided, then the tool starts in interactive mode.
 otherwise, the tool executes the code from the input file (first argument) and writes the output to the output file (second argument or standard output if not specified). 
 
 ## Interactive mode
@@ -69,10 +69,6 @@ For instance, the following are valid declaration commands:
       Process P1 = q?{ m1; P, m2; 0 }
       Process Q  = p!{ m1; p?l; Q, m2; p?l; 0 }
     ] ;; 
-    
-    
-    
-    
     let [
       Session S  = p[P] | q[Q] | Empty 
       Process Q1 = p?l; Q
