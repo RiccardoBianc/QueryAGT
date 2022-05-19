@@ -2,7 +2,7 @@
 
 This is a simple tool to experiment with the global types formalism for asynchronous sessions described in [1]. 
 Details on the implementation can be found in [2]. 
-1. Francesco Dagnino, Paola Giannini and Mariangiola Dezani-Ciancaglini (2021). 
+1. Francesco Dagnino, Paola Giannini and Mariangiola Dezani-Ciancaglini (2021).
 [Deconfined global types for asynchronous sessions](https://link.springer.com/chapter/10.1007/978-3-030-78142-2_3). 
 **Coordination Models and Languages - 23rn International Conference, COORDINATION 2021**
 2. Riccardo Bianchini and Francesco Dagnino (2021).
@@ -69,6 +69,10 @@ For instance, the following are valid declaration commands:
       Process P1 = q?{ m1; P, m2; 0 }
       Process Q  = p!{ m1; p?l; Q, m2; p?l; 0 }
     ] ;; 
+    
+    
+    
+    
     let [
       Session S  = p[P] | q[Q] | Empty 
       Process Q1 = p?l; Q
