@@ -36,6 +36,8 @@ To execute the tool in batch mode
 
 
 
+Result file will be saved in the same folder of the input file.
+
 ## Prerequisites for installation
 * SWI-Prolog (>= v8.2.4) 
 * Java (>= v16.0.2)
