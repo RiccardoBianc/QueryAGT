@@ -36,7 +36,7 @@ To execute the tool in batch mode
 
 
 
-## Prerequisites 
+## Prerequisites for installation
 * SWI-Prolog (>= v8.2.4) 
 * Java (>= v16.0.2)
 * Maven (>= v3.8.3)
