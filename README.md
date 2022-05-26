@@ -84,7 +84,19 @@ Declarations inside a `let` block can be mutually recursive.
 All declared variables are in the global scope. 
 
 The tool performs a rudimentary typechecking, checking that all used variables are declared with the correct type,  e.g., rejecting a declaration block where a process variable is used as a queue. 
-For instance, the following are valid declaration commands: 
+
+Query in interactive mode must contained in a single line.
+Queries correspond to judgments described in the papers. In particular:
+* `io-match G|M` checks that the configuration type `G|M` is input/output matching
+* `bounded G` checks that the global type `G` is bounded
+*  `proj(G,p) == P` checks that the projection of the global type `G` on `p` is `P`
+* `exists-proj(G,p)` checks that the projection of the global type `G` on `p` is well-defined
+* `exist-all-proj G` checks that all the projections of the global type `G` are well-defined
+* `wf G|M` checks that the configuration type `G|M` is well-formed.
+* `S has type G|M` checks that `S` is well-typed with respect to the  configuration type `G|M`
+*  for each query, it is also possible to check that its negation holds by prepending `not`
+
+For instance, the following is a valid declaration command: 
 
 
 
@@ -98,6 +110,13 @@ For instance, the following are valid declaration commands:
       Process P1 = q?{ m1; P, m2; 0 }
       Process Q  = p!{ m1; p?l; Q, m2; p?l; 0 }
     ] ;; 
+    
+    
+    
+This command declares G1 and G2 as global types, P,P1 and Q as processes.
+
+
+
     let [
       Session S  = p[P] | q[Q] | Empty 
       Process Q1 = p?l; Q
@@ -105,16 +124,8 @@ For instance, the following are valid declaration commands:
     ] ;; 
 
 
-Queries correspond to judgments described in the papers. In particular:
-* `io-match G|M` checks that the configuration type `G|M` is input/output matching
-* `bounded G` checks that the global type `G` is bounded
-*  `proj(G,p) == P` checks that the projection of the global type `G` on `p` is `P`
-* `exists-proj(G,p)` checks that the projection of the global type `G` on `p` is well-defined
-* `exist-all-proj G` checks that all the projections of the global type `G` are well-defined
-* `wf G|M` checks that the configuration type `G|M` is well-formed.
-* `S has type G|M` checks that `S` is well-typed with respect to the  configuration type `G|M`
-*  for each query, it is also possible to check that its negation holds by prepending `not`
 
+The command above declares Q1 as a process, M as a Queue and S as session. Session S starts with an empty queue and is composed of two participants; p, which executes process P, and s, which executes process Q. 
 Again, the tool checks that entities are used in the queries accordingly to their declaration. For instance, in the typing query it is checked that the first argument is a session and the second argument is a configuration type.
 A query is written with syntax:
 
@@ -122,10 +133,17 @@ A query is written with syntax:
     query ;; 
 
 
-For instance, the following are valid queries: 
+For instance, we can check whether Q is the process for participant q in global type G1 with command
 
 
     proj(G1,q) ==  Q ;; 
+    
+    
+    
+We can check whether session p[P1] | q[Q1] | M complies with global type (p>q?l; q>p?m1; G) starting from queue M
+
+
+
     p[P1] | q[Q1] | M has type (p>q?l; q>p?m1; G) | M ;;
 
 
