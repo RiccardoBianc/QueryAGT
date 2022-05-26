@@ -8,6 +8,7 @@ Details on the implementation can be found in [2].
 2. Riccardo Bianchini and Francesco Dagnino (2021).
 [Asynchronous global types in co-logic programming](https://link.springer.com/chapter/10.1007/978-3-030-78142-2_9).
 **Coordination Models and Languages - 23rn International Conference, COORDINATION 2021**
+
 The tool can be either installed locally or it can be executed as a Docker container
 
 ## Docker container
