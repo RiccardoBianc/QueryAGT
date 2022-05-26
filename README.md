@@ -20,7 +20,21 @@ To pull the container the command is
 
 
 
--
+To execute the tool in inteactive mode
+
+
+
+    docker run -it riccardobia/queryagt
+
+
+
+To execute the tool in batch mode
+
+
+
+    docker run --rm -v absolute/path/to/folder/containing/input:/test -it riccardobia/queryagt test/testFile.txt test/resultFile.txt
+
+
 
 ## Prerequisites 
 * SWI-Prolog (>= v8.2.4) 
