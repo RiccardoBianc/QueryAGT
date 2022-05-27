@@ -96,7 +96,7 @@ Queries correspond to judgments described in the papers. In particular:
 * `S has type G|M` checks that `S` is well-typed with respect to the  configuration type `G|M`
 *  for each query, it is also possible to check that its negation holds by prepending `not`
 
-For instance, the following is a valid declaration command: 
+The following is a valid declaration command: 
 
 
 
