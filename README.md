@@ -203,3 +203,6 @@ For instance, the the following code defines a single group, composed by two tes
 
 ## Testing
 File ***test.txt*** contains 124 queries to test the tool.
+
+## Code documentation
+You can find code documentation about [core](https://github.com/RiccardoBianc/QueryAGT/blob/master/src/main/resources/README.md) parte and [interface](https://github.com/RiccardoBianc/QueryAGT/blob/master/src/main/java/runner/README.md) part
