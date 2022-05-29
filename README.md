@@ -39,9 +39,9 @@ To execute the tool in batch mode
 Result file will be saved in the same folder of the input file.
 
 ## Prerequisites for installation
-* SWI-Prolog (>= v8.2.4) 
-* Java (>= v16.0.2)
-* Maven (>= v3.8.3)
+* [SWI-Prolog](https://www.swi-prolog.org/download/stable) (>= v8.2.4) 
+* [Java](https://www.oracle.com/java/technologies/downloads/) (>= v17)
+* [Maven](https://maven.apache.org/download.cgi) (>= v3.8.3)
 
 ## Building
 To build the tool just clone the repository and run
