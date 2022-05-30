@@ -7,16 +7,14 @@ import java.util.Set;
 
 public class CodeBuilder extends InputParser.TestsBaseVisitor<String> {
 	
-	private HashMap<String, List<String>> declMap = new HashMap<>();
-	private final String PROCESS = "Process";
-	private final String TYPE = "GlobalType";
-	private final String QUEUE = "Queue";
-	private final String NETWORK = "Session";
-	String code_final;
-	public HashMap<String, List<String>> test_map = new HashMap<>();
-	int projectionsCounter = 0;
+	private HashMap<String, List<String>> declMap = new HashMap<>();//a map that associates each type of entity with a list of variables
+	private final String PROCESS = "Process";// a type of entity
+	private final String TYPE = "GlobalType";// a type of entity
+	private final String QUEUE = "Queue";// a type of entity
+	private final String NETWORK = "Session";// a type of entity
+	String code_final;// resulting SWI-Prolog-code
 	
-	private void initializeDecl(){
+	private void initializeDecl(){// the map is initialized with no variables for all entity types
 		HashMap<String, List<String>> map = new HashMap<>();
 		map.put(QUEUE, new ArrayList<>());
 		map.put(PROCESS, new ArrayList<>());
@@ -60,7 +58,7 @@ public class CodeBuilder extends InputParser.TestsBaseVisitor<String> {
 	
 	@Override 
 	public String visitQueue(InputParser.TestsParser.QueueContext ctx) { 
-		if(ctx.getChild(0).getText().equals("Empty")) {
+		if(ctx.getChild(0).getText().equals("Empty")) {//empty list in SWI_Prolog is represented with "[]"
 			return "[]";
 		}
 		if(ctx.getChildCount() == 1){
