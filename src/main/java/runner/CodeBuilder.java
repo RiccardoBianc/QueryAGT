@@ -13,23 +13,8 @@ public class CodeBuilder extends InputParser.TestsBaseVisitor<String> {
 	private final String QUEUE = "Queue";// a type of entity
 	private final String NETWORK = "Session";// a type of entity
 	String code_final;// resulting SWI-Prolog-code
-	
-	private void initializeDecl(){// the map is initialized with no variables for all entity types
-		HashMap<String, List<String>> map = new HashMap<>();
-		map.put(QUEUE, new ArrayList<>());
-		map.put(PROCESS, new ArrayList<>());
-		map.put(TYPE, new ArrayList<>());
-		map.put(NETWORK, new ArrayList<>());
-		this.declMap = map;
-	}
-	
-    public CodeBuilder() {
-		super();
-		initializeDecl();
-	}
 
-
-	public CodeBuilder(HashMap<String, List<String>> declMap) {
+	public CodeBuilder(HashMap<String, List<String>> declMap) {// the environment is passed, since it is computed in Interpreter.java
 		super();
 		this.declMap = declMap;
 	}
@@ -61,7 +46,7 @@ public class CodeBuilder extends InputParser.TestsBaseVisitor<String> {
 		if(ctx.getChild(0).getText().equals("Empty")) {//empty list in SWI_Prolog is represented with "[]"
 			return "[]";
 		}
-		if(ctx.getChildCount() == 1){
+		if(ctx.getChildCount() == 1){// if this node has one element, then it is a variable
 			return visit(ctx.variableQueue());			
 		}
 		
@@ -70,18 +55,18 @@ public class CodeBuilder extends InputParser.TestsBaseVisitor<String> {
 
 		HashMap<String, List<String>> queue = new HashMap<>();
 		
-		for (int i = 0; i <= list.size() - 2; i+=2) {
+		for (int i = 0; i <= list.size() - 2; i+=2) {// queue is visited as a list of messages an it is transformed in a queue as implemented in Prolog part
 			String sender = visit(list.get(i));
 			String receiver = visit(list.get(i+1));
 			String pair = sender + "-" + receiver;
 			String message = visit(messages.get(i/2));
-			if(queue.containsKey(pair)) {
-				List<String> value = queue.get(pair);
+			if(queue.containsKey(pair)) {// in Prolog pairs of sender and receiver are associated with lists of messages
+				List<String> value = queue.get(pair);// pair already present, list upddated
 				value.add(message);
 				queue.put(pair,value);
 			}
 			else {
-				List<String> value = new ArrayList<>();
+				List<String> value = new ArrayList<>();// new pair, list created
 				value.add(message);
 				queue.put(pair,value);
 			}
@@ -323,14 +308,14 @@ public class CodeBuilder extends InputParser.TestsBaseVisitor<String> {
 		return checkVar(var,PROCESS);	
 	}
 	
-	private String checkVar(String var, String type) {
+	private String checkVar(String var, String type) {//this function checks that variables are used compatibly with the declaration
 		Set<String> types = this.declMap.keySet();
 		for (String key : types) {
-			if(!key.equals(type) && this.declMap.get(key).contains(var)) {
+			if(!key.equals(type) && this.declMap.get(key).contains(var)) {// if a variable is declared with a different type
 				throw new QueryAGTException("Variable " + var + " has type " + key + " but " + type +" is expected");
 			}
 		}
-		if(!this.declMap.get(type).contains(var)) {
+		if(!this.declMap.get(type).contains(var)) {//if variable is not declared
 			throw new QueryAGTException("Variable " + var +" is not declared");
 		}
 		return var;
