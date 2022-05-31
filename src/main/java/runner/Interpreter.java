@@ -24,7 +24,8 @@ import InputParser.TestsParser.Well_formdnessContext;
 public class Interpreter extends InputParser.TestsBaseVisitor<Void> {
 
 
-	private HashMap<String, List<String>> environment = new HashMap<>(); /*In this hashmap keys are the types of entities and values the variables names. It is the execution environment*/
+	private HashMap<String, List<String>> environment = new HashMap<>(); /*In this hashmap keys are the types of entities and values the variables names. It is the 
+									       execution environment*/
 	private HashMap<String, String> codes = new HashMap<>(); /*In this hasmap a key is the variable name, a value is the prolog code representing the associated entity*/
 
 	private final String PROCESS = "Process";
@@ -35,7 +36,7 @@ public class Interpreter extends InputParser.TestsBaseVisitor<Void> {
 	int countPassed=0; /*Number of passed queries*/
 	int total=0; /*Number of total queries*/
 
-	private void createEnv() { /*This function initialize environment and codes*/
+	private void createEnv() { /*This function initialize environment and codes. At the beginning there are no entities*/
 		HashMap<String, List<String>> map = new HashMap<>();
 		map.put(QUEUE, new ArrayList<>());
 		map.put(PROCESS, new ArrayList<>());
@@ -44,14 +45,13 @@ public class Interpreter extends InputParser.TestsBaseVisitor<Void> {
 		this.environment = map;	
 		this.codes = new HashMap<>();
 	}
-
 	public Interpreter(String space) {
 		super();
 		createEnv();
 		this.indentationSpace = space; /*The indentation is different in interactive and batch mode*/
 	}
 
-	public HashMap<String, List<String>> deepCopyEnvironment() {
+	public HashMap<String, List<String>> deepCopyEnvironment() {/*This function returns a deep copy of the current environment*/
 		HashMap<String, List<String>> snapshot = new HashMap<String,List<String>>();
 		new HashMap<String, List<String>>();
 		for (String key : this.environment.keySet()) {
