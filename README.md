@@ -9,7 +9,7 @@ Details on the implementation can be found in [2].
 [Asynchronous global types in co-logic programming](https://link.springer.com/chapter/10.1007/978-3-030-78142-2_9).
 **Coordination Models and Languages - 23rn International Conference, COORDINATION 2021**
 
-The tool can be either installed locally or it can be executed as a Docker container
+The tool can be either built from sources (installing all dependencies) or it can be executed as a Docker container. 
 
 ## Docker container
 To pull the container the command is
@@ -36,14 +36,15 @@ To execute the tool in batch mode
 
 
 
-Result file will be saved in the same folder of the input file.
+The result file will be saved in the same folder of the input file.
 
-## Prerequisites for installation
+## Building from sources 
+### Prerequisites for installation
 * [SWI-Prolog](https://www.swi-prolog.org/download/stable) (>= v8.2.4) 
 * [Java](https://www.oracle.com/java/technologies/downloads/) (>= v17)
 * [Maven](https://maven.apache.org/download.cgi) (>= v3.8.3)
 
-## Building
+### Building 
 To build the tool just clone the repository and run
 
 
@@ -53,7 +54,7 @@ To build the tool just clone the repository and run
 in the downloaded directory.  
 The executable jar file will be at the path ``target/QueryAGT.jar```. 
 
-## Running
+### Running
 To execute the tool you need to have SWI-Prolog in the PATH.
 Then run 
 
@@ -80,12 +81,9 @@ The syntax of a declaration  command is the following:
 
 
 Each declaration begins with a keyword for the kind of declared entity: `Process` for processes, `GlobalType` for global types, `Queue` for queues, and `Session` for sessions.
-Declarations inside a `let` block can be mutually recursive. 
+Declarations inside a `let` block can be mutually recursive, to handle possibly non-terminating protocols. 
 All declared variables are in the global scope. 
 
-The tool performs a rudimentary typechecking, checking that all used variables are declared with the correct type,  e.g., rejecting a declaration block where a process variable is used as a queue. 
-
-Query in interactive mode must contained in a single line.
 Queries correspond to judgments described in the papers. In particular:
 * `io-match G|M` checks that the configuration type `G|M` is input/output matching
 * `bounded G` checks that the global type `G` is bounded
@@ -96,7 +94,24 @@ Queries correspond to judgments described in the papers. In particular:
 * `S has type G|M` checks that `S` is well-typed with respect to the  configuration type `G|M`
 *  for each query, it is also possible to check that its negation holds by prepending `not`
 
-The following is a valid declaration command: 
+A query in interactive mode must fit in a single line and 
+it is written with syntax: 
+
+
+    query ;; 
+
+
+The tool performs a rudimentary typechecking, verifying that all used variables are declared with the correct kind,  e.g., rejecting a declaration block or a query where a process variable is used where a queue is expected. 
+
+To terminate the interactive session write 
+
+
+    exit ;; 
+
+
+
+
+For instance, the following command declares G1 and G2 as global types and P, P1 and Q as processes. 
 
 
 
@@ -113,7 +128,7 @@ The following is a valid declaration command:
     
     
     
-This command declares G1 and G2 as global types, P,P1 and Q as processes.
+Then, the next command declares Q1 as a process, M as a queue and S as session. 
 
 
 
@@ -125,32 +140,22 @@ This command declares G1 and G2 as global types, P,P1 and Q as processes.
 
 
 
-The command above declares Q1 as a process, M as a Queue and S as session. Session S starts with an empty queue and is composed of two participants; p, which executes process P, and s, which executes process Q. 
-Again, the tool checks that entities are used in the queries accordingly to their declaration. For instance, in the typing query it is checked that the first argument is a session and the second argument is a configuration type.
-A query is written with syntax:
+The session S consists of two participants p and q, executing processes P and Q, respectively. 
+Note that this declaration uses variables introduced by the previous one (P and Q). 
 
-
-    query ;; 
-
-
-For instance, we can check whether Q is the process for participant q in global type G1 with command
+After declaring entities, one can ask queries to the tool. 
+For instance, we can check whether Q is the process implementing the behaviour of the participant q in the global type G1, writing the command 
 
 
     proj(G1,q) ==  Q ;; 
     
     
     
-We can check whether session p[P1] | q[Q1] | M complies with global type (p>q?l; q>p?m1; G) starting from queue M
+or we can check whether the session `p[P1] | q[Q1] | M` complies with the global type `p>q?l; q>p?m1; G1` with queue M 
 
 
 
-    p[P1] | q[Q1] | M has type (p>q?l; q>p?m1; G) | M ;;
-
-
-To terminate the interactive session run 
-
-
-    exit ;; 
+    p[P1] | q[Q1] | M has type (p>q?l; q>p?m1; G1) | M ;;
 
 
 
@@ -205,4 +210,9 @@ For instance, the the following code defines a single group, composed by two tes
 File ***test.txt*** contains 124 queries to test the tool.
 
 ## Code documentation
-You can find code documentation about [core](https://github.com/RiccardoBianc/QueryAGT/blob/master/src/main/resources/README.md) parte and [interface](https://github.com/RiccardoBianc/QueryAGT/blob/master/src/main/java/runner/README.md) part
+You can find code documentation at the following links: 
+* [prolog core](https://github.com/RiccardoBianc/QueryAGT/blob/master/src/main/resources/)
+* [query language parser & interpreter](https://github.com/RiccardoBianc/QueryAGT/blob/master/src/main/java/runner/) 
+* [ANTLR grammar](https://github.com/RiccardoBianc/QueryAGT/blob/master/src/main/antlr4/Tests.g4) 
+
+
