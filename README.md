@@ -135,7 +135,7 @@ Then, the next command declares Q1 as a process, M as a queue and S as session.
     let [
       Session S  = p[P] | q[Q] | Empty 
       Process Q1 = p?l; Q
-      Queue M = <p,l,q>,<q,m1,p> 
+      Queue M = <p,l,q><q,m1,p> 
     ] ;; 
 
 
