@@ -4,9 +4,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
+import runner.TestsParser.Parenthesis_queueContext;
+import runner.TestsParser.Parenthesis_sessionContext;
 
-public class CodeBuilder extends InputParser.TestsBaseVisitor<String> {
+
+public class CodeBuilder extends TestsBaseVisitor<String> {
 	
+	@Override
+	public String visitParenthesis_session(Parenthesis_sessionContext ctx) {
+		if(ctx.session()!=null) {
+			return visit(ctx.session());} 
+			else {return visit(ctx.parenthesis_session());}
+	}
+
+
 	private HashMap<String, List<String>> declMap = new HashMap<>();//a map that associates each type of entity with a list of variables
 	private final String PROCESS = "Process";// a type of entity
 	private final String TYPE = "GlobalType";// a type of entity
@@ -20,19 +31,19 @@ public class CodeBuilder extends InputParser.TestsBaseVisitor<String> {
 	}
 
 	@Override
-	public String visitTest_group_name(InputParser.TestsParser.Test_group_nameContext ctx) {
+	public String visitTest_group_name(TestsParser.Test_group_nameContext ctx) {
 		String var = ctx.TOKEN_IDENTIFIER().getText();
 		return var.substring(0, 1).toLowerCase() + var.substring(1);
 	}
 
 	@Override
-	public String visitTest_name(InputParser.TestsParser.Test_nameContext ctx) {
+	public String visitTest_name(TestsParser.Test_nameContext ctx) {
 		String var = ctx.TOKEN_IDENTIFIER().getText();
 		return var.substring(0, 1).toLowerCase() + var.substring(1);	}
 	
 	
 	@Override
-	public String visitQuery(InputParser.TestsParser.QueryContext ctx) {
+	public String visitQuery(TestsParser.QueryContext ctx) {
 		String not = "";
 		if(ctx.NOT() != null) {
 			not = "\\+";			
@@ -42,7 +53,7 @@ public class CodeBuilder extends InputParser.TestsBaseVisitor<String> {
 	
 	
 	@Override 
-	public String visitQueue(InputParser.TestsParser.QueueContext ctx) { 
+	public String visitQueue(TestsParser.QueueContext ctx) { 
 		if(ctx.getChild(0).getText().equals("Empty")) {//empty list in SWI_Prolog is represented with "[]"
 			return "[]";
 		}
@@ -50,8 +61,8 @@ public class CodeBuilder extends InputParser.TestsBaseVisitor<String> {
 			return visit(ctx.variableQueue());			
 		}
 		
-		List<InputParser.TestsParser.ParticipantContext> list = ctx.participant();
-		List<InputParser.TestsParser.LabelContext> messages = ctx.label();
+		List<TestsParser.ParticipantContext> list = ctx.participant();
+		List<TestsParser.LabelContext> messages = ctx.label();
 
 		HashMap<String, List<String>> queue = new HashMap<>();
 		
@@ -83,28 +94,28 @@ public class CodeBuilder extends InputParser.TestsBaseVisitor<String> {
 	}
 
 	@Override 
-	public String visitSession(InputParser.TestsParser.SessionContext ctx) {
+	public String visitSession(TestsParser.SessionContext ctx) {
 		if(ctx.getChildCount() == 1) {
 			return visit(ctx.variableSession());			
 		}
 		String res = "[";
-		List<InputParser.TestsParser.ParticipantContext> participants = ctx.participant();
-		List<InputParser.TestsParser.ProcessContext> processes = ctx.process();
+		List<TestsParser.ParticipantContext> participants = ctx.participant();
+		List<TestsParser.Parenthesis_processContext> processes = ctx.parenthesis_process();
 		
 		for (int i = 0; i < participants.size(); i++) {
 			res += visit(participants.get(i)) + "-" + visit(processes.get(i)) + ",";
 		}
 		res = res.substring(0, res.length() - 1)+ "]";
-		res += "-" + visit(ctx.queue()) ;
+		res += "-" + visit(ctx.parenthesis_queue()) ;
 		return res; 
 	}
 
 
 	@Override 
-	public String visitWell_formdness(InputParser.TestsParser.Well_formdnessContext ctx) { 
+	public String visitWell_formdness(TestsParser.Well_formdnessContext ctx) { 
 		try {
-			String type = visit(ctx.global_type());
-			String queue = visit(ctx.queue());
+			String type = visit(ctx.parenthesis_type());
+			String queue = visit(ctx.parenthesis_queue());
 			return "well_formdness("+ type + "," + queue + ")";
 			}
 			catch (Error e) {
@@ -113,9 +124,9 @@ public class CodeBuilder extends InputParser.TestsBaseVisitor<String> {
 	}
 	
 	@Override
-	public String visitBoundness(InputParser.TestsParser.BoundnessContext ctx) {
+	public String visitBoundness(TestsParser.BoundnessContext ctx) {
 		try {
-			String type = visit(ctx.global_type());
+			String type = visit(ctx.parenthesis_type());
 			return "bounded("+ type + ")";
 			}
 			catch (Error e) {
@@ -124,10 +135,10 @@ public class CodeBuilder extends InputParser.TestsBaseVisitor<String> {
 		}
 
 	@Override
-	public String visitIom(InputParser.TestsParser.IomContext ctx) {
+	public String visitIom(TestsParser.IomContext ctx) {
 		try {
-			String type = visit(ctx.global_type());
-			String queue = visit(ctx.queue());
+			String type = visit(ctx.parenthesis_type());
+			String queue = visit(ctx.parenthesis_queue());
 			return "io_match("+ type + "," + queue + ")";
 			}
 			catch (Error e) {
@@ -136,9 +147,9 @@ public class CodeBuilder extends InputParser.TestsBaseVisitor<String> {
 		}
 
 	@Override 
-	public String visitAll_proj_exists(InputParser.TestsParser.All_proj_existsContext ctx) { 
+	public String visitAll_proj_exists(TestsParser.All_proj_existsContext ctx) { 
 		try {
-			String type = visit(ctx.global_type());
+			String type = visit(ctx.parenthesis_type());
 			return "projection_defined_all_players("+ type + ")";
 			}
 			catch (Error e) {
@@ -147,11 +158,11 @@ public class CodeBuilder extends InputParser.TestsBaseVisitor<String> {
 		}
 	
 	@Override 
-	public String visitTyping(InputParser.TestsParser.TypingContext ctx) { 
+	public String visitTyping(TestsParser.TypingContext ctx) { 
 		try {
-			String network = visit(ctx.session());
-			String type = visit(ctx.global_type());
-			String queue = visit(ctx.queue());
+			String network = visit(ctx.parenthesis_session());
+			String type = visit(ctx.parenthesis_type());
+			String queue = visit(ctx.parenthesis_queue());
 			String res = "typing("+ network + "," + type + "-" + queue + ")";
 			return res;
 			}
@@ -162,9 +173,9 @@ public class CodeBuilder extends InputParser.TestsBaseVisitor<String> {
 	
 	
 	@Override
-	public String visitProjection_exists(InputParser.TestsParser.Projection_existsContext ctx) {
+	public String visitProjection_exists(TestsParser.Projection_existsContext ctx) {
 		try {
-			String type = visit(ctx.global_type());
+			String type = visit(ctx.parenthesis_type());
 			String participant = visit(ctx.participant());
 			String res = "projection("+ type + "," + participant + ",_),!";
 			return res;
@@ -175,11 +186,11 @@ public class CodeBuilder extends InputParser.TestsBaseVisitor<String> {
 		}
 
 	@Override 
-	public String visitProjection_assert(InputParser.TestsParser.Projection_assertContext ctx) {
+	public String visitProjection_assert(TestsParser.Projection_assertContext ctx) {
 		try {
-		String type = visit(ctx.global_type());
+		String type = visit(ctx.parenthesis_type());
 		String participant = visit(ctx.participant());
-		String process = visit(ctx.process());
+		String process = visit(ctx.parenthesis_process());
 		String res = "projection("+ type + "," + participant + "," + process + "),!";
 		return res;
 		}
@@ -190,8 +201,15 @@ public class CodeBuilder extends InputParser.TestsBaseVisitor<String> {
 	}
 
 		
+	@Override
+	public String visitParenthesis_queue(Parenthesis_queueContext ctx) {
+		if(ctx.queue()!=null) {
+		return visit(ctx.queue());} 
+		else {return visit(ctx.parenthesis_queue());}
+	}
+
 	@Override 
-	public String visitDeclaration(InputParser.TestsParser.DeclarationContext ctx){
+	public String visitDeclaration(TestsParser.DeclarationContext ctx){
 		String variable = visit(ctx.getChild(1));
 		String element = visit(ctx.getChild(3));
 		return variable + " = " + element;		
@@ -199,7 +217,7 @@ public class CodeBuilder extends InputParser.TestsBaseVisitor<String> {
 	
 	
 	@Override
-	public String visitGlobal_type(InputParser.TestsParser.Global_typeContext ctx) {
+	public String visitGlobal_type(TestsParser.Global_typeContext ctx) {
 		if(ctx.getChild(0).getText().equals("End")) {return "end";}
 		if(ctx.getChildCount() == 1) {return visit(ctx.variableType());}
 		
@@ -222,7 +240,7 @@ public class CodeBuilder extends InputParser.TestsBaseVisitor<String> {
 	}
 
 	@Override 
-	public String visitProcess(InputParser.TestsParser.ProcessContext ctx) {
+	public String visitProcess(TestsParser.ProcessContext ctx) {
 		if(ctx.getChild(0).getText().equals("0")) {return "zero";}
 
 		if(ctx.getChildCount() == 1) {return visit(ctx.variableProcess());}
@@ -242,14 +260,14 @@ public class CodeBuilder extends InputParser.TestsBaseVisitor<String> {
 		}}
 	
 	@Override 
-	public String visitHead_type(InputParser.TestsParser.Head_typeContext ctx) {
+	public String visitHead_type(TestsParser.Head_typeContext ctx) {
 		String message = visit(ctx.label());
 		String child = visit(ctx.parenthesis_type());
 		return message + "-" + child; }
 
 	@Override 
-	public String visitTail_type(InputParser.TestsParser.Tail_typeContext ctx) {
-	List<InputParser.TestsParser.Head_typeContext> list = ctx.head_type();
+	public String visitTail_type(TestsParser.Tail_typeContext ctx) {
+	List<TestsParser.Head_typeContext> list = ctx.head_type();
 		String res = "";
 		for (int i = 0; i < list.size(); i++) {
 			res = res + "," + visit(list.get(i)); 
@@ -257,15 +275,15 @@ public class CodeBuilder extends InputParser.TestsBaseVisitor<String> {
 		return res;
 		}
  	@Override
- 	public String visitHead_process(InputParser.TestsParser.Head_processContext ctx) {
+ 	public String visitHead_process(TestsParser.Head_processContext ctx) {
  		String message = visit(ctx.label());
 		String child = visit(ctx.parenthesis_process());
 		return message + "-" + child;
  	}
 
  	@Override 
- 	public String visitTail_process(InputParser.TestsParser.Tail_processContext ctx) { 
- 		List<InputParser.TestsParser.Head_processContext> list = ctx.head_process();
+ 	public String visitTail_process(TestsParser.Tail_processContext ctx) { 
+ 		List<TestsParser.Head_processContext> list = ctx.head_process();
 		String res = "";
 		for (int i = 0; i < list.size(); i++) {
 			res = res + "," + visit(list.get(i)); 
@@ -274,36 +292,40 @@ public class CodeBuilder extends InputParser.TestsBaseVisitor<String> {
  	}
 
 
-	@Override public String visitParenthesis_type(InputParser.TestsParser.Parenthesis_typeContext ctx) { 
-		return visit(ctx.global_type()); 
+	@Override public String visitParenthesis_type(TestsParser.Parenthesis_typeContext ctx) { 
+		if(ctx.global_type()!=null) {
+			return visit(ctx.global_type());} 
+			else {return visit(ctx.parenthesis_type());}
 	}
 	
-	@Override public String visitParenthesis_process(InputParser.TestsParser.Parenthesis_processContext ctx) {
-		return visit(ctx.process()); 
+	@Override public String visitParenthesis_process(TestsParser.Parenthesis_processContext ctx) {
+		if(ctx.process()!=null) {
+			return visit(ctx.process());} 
+			else {return visit(ctx.parenthesis_process());}
 	}
 		
 	@Override 
-	public String visitParticipant(InputParser.TestsParser.ParticipantContext ctx) {
+	public String visitParticipant(TestsParser.ParticipantContext ctx) {
 		return "\"" + visit(ctx.value()) + "\"";
 	}
 	
 	
-	@Override public String visitVariableSession(InputParser.TestsParser.VariableSessionContext ctx) {
+	@Override public String visitVariableSession(TestsParser.VariableSessionContext ctx) {
 		String var = visit(ctx.variable());
 		return checkVar(var,NETWORK);
 	}
 	
-	@Override public String visitVariableQueue(InputParser.TestsParser.VariableQueueContext ctx) { 
+	@Override public String visitVariableQueue(TestsParser.VariableQueueContext ctx) { 
 		String var = visit(ctx.variable());
 		return checkVar(var,QUEUE);	
 	}
 	
-	@Override public String visitVariableType(InputParser.TestsParser.VariableTypeContext ctx) {
+	@Override public String visitVariableType(TestsParser.VariableTypeContext ctx) {
 		String var = visit(ctx.variable());
 		return checkVar(var,TYPE);	
 	}
 	
-	@Override public String visitVariableProcess(InputParser.TestsParser.VariableProcessContext ctx) { 
+	@Override public String visitVariableProcess(TestsParser.VariableProcessContext ctx) { 
 		String var = visit(ctx.variable());
 		return checkVar(var,PROCESS);	
 	}
@@ -322,13 +344,13 @@ public class CodeBuilder extends InputParser.TestsBaseVisitor<String> {
 	}
 	
 	@Override
-	public String visitValue(InputParser.TestsParser.ValueContext ctx) {
+	public String visitValue(TestsParser.ValueContext ctx) {
 		String var = ctx.TOKEN_IDENTIFIER().getText();
 		return var.substring(0, 1).toLowerCase() + var.substring(1);
 	}
 
 	@Override
-	public String visitVariable(InputParser.TestsParser.VariableContext ctx) { 
+	public String visitVariable(TestsParser.VariableContext ctx) { 
 		return capitaliseVariableName(ctx.TOKEN_IDENTIFIER().getText());
 	}
 
@@ -338,7 +360,7 @@ public class CodeBuilder extends InputParser.TestsBaseVisitor<String> {
 
 	
 	@Override 
-	public String visitLabel(InputParser.TestsParser.LabelContext ctx) {
+	public String visitLabel(TestsParser.LabelContext ctx) {
 		return "\"" + ctx.getChild(0).getText() + "\"";
 	}
 

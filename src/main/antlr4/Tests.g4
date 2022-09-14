@@ -60,7 +60,7 @@ query
 	;
 	
 all_proj_exists:
-	ALL_PROJ_EXISTS global_type
+	ALL_PROJ_EXISTS parenthesis_type
 	;
 	
 ALL_PROJ_EXISTS:
@@ -68,13 +68,13 @@ ALL_PROJ_EXISTS:
 	;
 	
 iom:
-	IOM global_type '|' queue;
+	IOM parenthesis_type '|' parenthesis_queue;
 
 IOM:
 	'io-match';
 	
 boundness:
-	BOUND global_type
+	BOUND parenthesis_type
 	;
 	
 BOUND:
@@ -82,11 +82,11 @@ BOUND:
 	;
 
 projection_assert 
-	: PROJ '('	global_type ',' participant  ')' '==' process
+	: PROJ '('	parenthesis_type ',' participant  ')' '==' parenthesis_process
 	;
 
 projection_exists
-	:   EXISTS_PROJ '('	global_type ',' participant  ')'
+	:   EXISTS_PROJ '('	parenthesis_type ',' participant  ')'
 	;
 
 ON
@@ -112,23 +112,32 @@ EXISTS_PROJ
 	
 well_formdness
 	:
-	WELL_FORMED global_type '|' queue
+	WELL_FORMED parenthesis_type '|' parenthesis_queue
 	;
 	
 typing
 	:
-	 session HAS TYPE global_type '|' queue
+	 parenthesis_session HAS TYPE parenthesis_type '|' parenthesis_queue
 	;
 
 declaration
    :  
-     ATTRIBUTE_PROCESS variableProcess '=' process /* processi */
-   | ATTRIBUTE_TYPE variableType '=' global_type /* tipi globali */
-   | ATTRIBUTE_QUEUE variableQueue '=' queue
-   | ATTRIBUTE_SESSION variableSession '=' session
+     ATTRIBUTE_PROCESS variableProcess '=' parenthesis_process /* processi */
+   | ATTRIBUTE_TYPE variableType '=' parenthesis_type /* tipi globali */
+   | ATTRIBUTE_QUEUE variableQueue '=' parenthesis_queue
+   | ATTRIBUTE_SESSION variableSession '=' parenthesis_session
    ;
 
-   
+parenthesis_session
+	: '(' parenthesis_session ')'
+	| session
+	;	
+
+parenthesis_queue
+	: '(' parenthesis_queue ')'
+	| queue
+	;	
+		
 queue
 	: 'Empty'
 	|  ('<' participant ',' label ','  participant '>')+
@@ -136,7 +145,7 @@ queue
 	;
 
 session
-	: participant '[' process ']' ( '|' participant '[' process ']')* '|' queue
+	: participant '[' parenthesis_process ']' ( '|' participant '[' parenthesis_process ']')* '|' parenthesis_queue
 	| variableSession
 	;
 
@@ -178,12 +187,12 @@ head_process
     ;
 
 parenthesis_type 
-	: '(' global_type ')'
+	: '(' parenthesis_type ')'
 	|     global_type
 	;
 
 parenthesis_process 
-	: '(' process ')'
+	: '(' parenthesis_process ')'
 	|     process
 	;
 

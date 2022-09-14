@@ -9,19 +9,19 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.antlr.v4.runtime.tree.ParseTree;
-import InputParser.TestsParser.All_proj_existsContext;
-import InputParser.TestsParser.BoundnessContext;
-import InputParser.TestsParser.DeclarationContext;
-import InputParser.TestsParser.IomContext;
-import InputParser.TestsParser.LetContext;
-import InputParser.TestsParser.Projection_assertContext;
-import InputParser.TestsParser.Projection_existsContext;
-import InputParser.TestsParser.QueryContext;
-import InputParser.TestsParser.TypingContext;
-import InputParser.TestsParser.Well_formdnessContext;
+import runner.TestsParser.All_proj_existsContext;
+import runner.TestsParser.BoundnessContext;
+import runner.TestsParser.DeclarationContext;
+import runner.TestsParser.IomContext;
+import runner.TestsParser.LetContext;
+import runner.TestsParser.Projection_assertContext;
+import runner.TestsParser.Projection_existsContext;
+import runner.TestsParser.QueryContext;
+import runner.TestsParser.TypingContext;
+import runner.TestsParser.Well_formdnessContext;
 
 
-public class Interpreter extends InputParser.TestsBaseVisitor<Void> {
+public class Interpreter extends runner.TestsBaseVisitor<Void> {
 
 
 	private HashMap<String, List<String>> environment = new HashMap<>(); /*In this hashmap keys are the types of entities and values the variables names. It is the 
@@ -71,7 +71,7 @@ public class Interpreter extends InputParser.TestsBaseVisitor<Void> {
 		HashMap<String, List<String>> snapshot = deepCopyEnvironment(); /*Here we save a snapshot of environment*/
 		try {
 			
-			for (InputParser.TestsParser.DeclarationContext decl : declarations) { /*This loop updates the environment with the declarations in input. If some type error is encountered then the environment is restored*/
+			for (runner.TestsParser.DeclarationContext decl : declarations) { /*This loop updates the environment with the declarations in input. If some type error is encountered then the environment is restored*/
 				String type = decl.getChild(0).getText();
 				String var = CodeBuilder.capitaliseVariableName(decl.getChild(1).getText());
 				
@@ -87,7 +87,7 @@ public class Interpreter extends InputParser.TestsBaseVisitor<Void> {
 			}
 			
 			CodeBuilder stringConverter = new CodeBuilder(this.environment);
-			for (InputParser.TestsParser.DeclarationContext decl : declarations) {
+			for (runner.TestsParser.DeclarationContext decl : declarations) {
 				String var = stringConverter.visit(decl.getChild(1)) + " = "; /*CodeBuilder makes typechecking control*/
 				String code = stringConverter.visit(decl) +"\r\n";
 				this.codes.put(var, code);
@@ -215,7 +215,7 @@ public class Interpreter extends InputParser.TestsBaseVisitor<Void> {
 	}
 
 	@Override
-	public Void visitProg(InputParser.TestsParser.ProgContext ctx) {
+	public Void visitProg(runner.TestsParser.ProgContext ctx) {
 		for (int i = 0; i < ctx.test_group().size(); i++) {
 			System.out.println("I'm executing test group: " + ctx.test_group_name(i).getText());
 			visit(ctx.test_group(i));
@@ -225,7 +225,7 @@ public class Interpreter extends InputParser.TestsBaseVisitor<Void> {
 	}
 
 	@Override
-	public Void visitTest_group(InputParser.TestsParser.Test_groupContext ctx) {
+	public Void visitTest_group(runner.TestsParser.Test_groupContext ctx) {
 		for (int i = 0; i < ctx.test().size(); i++) {
 			System.out.println("\tI'm executing test: " + ctx.test_name(i).getText() + ": ");
 			visit(ctx.test(i));
@@ -234,13 +234,13 @@ public class Interpreter extends InputParser.TestsBaseVisitor<Void> {
 	}
 
 	@Override
-	public Void visitTest(InputParser.TestsParser.TestContext ctx){
+	public Void visitTest(runner.TestsParser.TestContext ctx){
 		createEnv();
 		List<DeclarationContext> declarations = ctx.declaration();
 		List<String> declared = new ArrayList<>();
 		HashMap<String, List<String>> snapshot = deepCopyEnvironment(); /*Here we save a snapshot of environment*/
 		try {
-		for (InputParser.TestsParser.DeclarationContext decl : declarations) {
+		for (runner.TestsParser.DeclarationContext decl : declarations) {
 			String type = decl.getChild(0).getText();
 			String var = CodeBuilder.capitaliseVariableName(decl.getChild(1).getText());
 			
@@ -256,7 +256,7 @@ public class Interpreter extends InputParser.TestsBaseVisitor<Void> {
 		}
 		CodeBuilder stringConverter = new CodeBuilder(this.environment);
 		
-		for (InputParser.TestsParser.DeclarationContext decl : declarations) {
+		for (runner.TestsParser.DeclarationContext decl : declarations) {
 			String var = stringConverter.visit(decl.getChild(1)) + " = ";
 			String code = stringConverter.visit(decl) +"\r\n";
 			this.codes.put(var, code);
@@ -275,8 +275,8 @@ public class Interpreter extends InputParser.TestsBaseVisitor<Void> {
 	}
 
 	@Override
-	public Void visitQueries(InputParser.TestsParser.QueriesContext ctx) {
-		for (InputParser.TestsParser.QueryContext query : ctx.query()) {
+	public Void visitQueries(runner.TestsParser.QueriesContext ctx) {
+		for (runner.TestsParser.QueryContext query : ctx.query()) {
 			visit(query);
 		}
 		return null;
