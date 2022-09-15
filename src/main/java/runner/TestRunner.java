@@ -41,7 +41,7 @@ public class TestRunner
 		if(args.length > 0){
 			try {
 				CharStream input = CharStreams.fromFileName(args[0]);
-				TestsParser parser = TestRunner.generateTree(input);
+				InputParser.TestsParser parser = TestRunner.generateTree(input);
 				ParseTree tree = parser.prog();
 				
 				if(args.length > 1) {
@@ -82,7 +82,7 @@ public class TestRunner
 						return;
 					}
 					
-					TestsParser parser = TestRunner.generateTree(inputCode);
+					InputParser.TestsParser parser = TestRunner.generateTree(inputCode);
 					ParseTree tree = parser.interactive();
 					interpreter.visit(tree);
 				}
@@ -98,11 +98,11 @@ public class TestRunner
 		}
 	}
 
-	private static TestsParser generateTree(CharStream inputCode) {
-		TestsParser parser = null;
-		TestsLexer lexer = new TestsLexer(inputCode);
+	private static InputParser.TestsParser generateTree(CharStream inputCode) {
+		InputParser.TestsParser parser = null;
+		InputParser.TestsLexer lexer = new InputParser.TestsLexer(inputCode);
 		CommonTokenStream tokens = new CommonTokenStream(lexer);
-		parser = new TestsParser(tokens);
+		parser = new InputParser.TestsParser(tokens);
 		lexer.addErrorListener(new BaseErrorListener()  {
 	        @Override
 	        public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
