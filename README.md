@@ -67,7 +67,7 @@ If no argument is provided, then the tool starts in interactive mode.
 otherwise, the tool executes the code from the input file (first argument) and writes the output to the output file (second argument or standard output if not specified). 
 
 ## Interactive mode
-In interactive mode you have two possible commands: variable declaration and query execution. At the end of the command you have to add ```;;``` as terminator to execute it. 
+In interactive mode you have two possible commands: variable declaration and query execution. The tool accept only one command at a time. At the end of the command you have to add ```;;``` as terminator to execute it. 
 
 The syntax of a declaration  command is the following: 
 
@@ -81,7 +81,7 @@ The syntax of a declaration  command is the following:
 
 
 Each declaration begins with a keyword for the kind of declared entity: `Process` for processes, `GlobalType` for global types, `Queue` for queues, and `Session` for sessions.
-Declarations inside a `let` block can be mutually recursive, to handle possibly non-terminating protocols. 
+Declarations inside a `let` block can be mutually recursive, to handle possibly non-terminating protocols. When a variable is declared in a let command the association is saved in a global environment and can be used until a new declaration, that must preserve the type. For instance, a variable declared as `Process`, can de redefined only as `Process`.
 All declared variables are in the global scope. 
 
 Queries correspond to judgments described in the papers. In particular:
@@ -108,10 +108,9 @@ To terminate the interactive session write
 
     exit ;; 
 
+## Tutorial for the interactive mode
 
-
-
-For instance, the following command declares G1 and G2 as global types and P, P1 and Q as processes. 
+The first command declares G1 and G2 as global types and P, P1 and Q as processes. The syntax for entities is analogous to the syntax in [1].
 
 
 
@@ -128,7 +127,7 @@ For instance, the following command declares G1 and G2 as global types and P, P1
     
     
     
-Then, the next command declares Q1 as a process, M as a queue and S as session. 
+Then, we can execute the following command, that declares Q1 as a process, M as a queue and S as session. 
 
 
 
@@ -151,7 +150,7 @@ For instance, we can check whether Q is the process implementing the behaviour o
     
     
     
-or we can check whether the session `p[P1] | q[Q1] | M` complies with the global type `p>q?l; q>p?m1; G1` with queue M 
+or we can also check whether the session `p[P1] | q[Q1] | M` complies with the global type `p>q?l; q>p?m1; G1` with queue M 
 
 
 
