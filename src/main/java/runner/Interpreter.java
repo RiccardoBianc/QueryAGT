@@ -9,11 +9,14 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.antlr.v4.runtime.tree.ParseTree;
+
+import InputParser.TestsBaseVisitor;
 import InputParser.TestsParser.All_proj_existsContext;
 import InputParser.TestsParser.BoundnessContext;
 import InputParser.TestsParser.DeclarationContext;
 import InputParser.TestsParser.IomContext;
 import InputParser.TestsParser.LetContext;
+import InputParser.TestsParser.Parenthesis_queryContext;
 import InputParser.TestsParser.Projection_assertContext;
 import InputParser.TestsParser.Projection_existsContext;
 import InputParser.TestsParser.QueryContext;
@@ -101,6 +104,17 @@ public class Interpreter extends InputParser.TestsBaseVisitor<Void> {
 	}
 
 	@Override
+	public Void visitParenthesis_query(Parenthesis_queryContext ctx) {
+		if(ctx.query() != null) {
+			visit(ctx.query());
+			return null;
+		}
+		visit(ctx.parenthesis_query());
+		return null;
+	}
+
+	
+	@Override
 	public Void visitQuery(QueryContext ctx) {
 		CodeBuilder stringConverter = new CodeBuilder(this.environment);
 		String queryCode = stringConverter.visit(ctx);
@@ -139,7 +153,11 @@ public class Interpreter extends InputParser.TestsBaseVisitor<Void> {
 				QueryContext auxCtx = ctx;
 				while(auxCtx.NOT() != null) {
 					System.out.print("not ");
-					auxCtx = auxCtx.query();
+					Parenthesis_queryContext parenthesisQuery = auxCtx.parenthesis_query();
+					while(parenthesisQuery.parenthesis_query() != null) {
+						parenthesisQuery = parenthesisQuery.parenthesis_query();
+					}
+					auxCtx = parenthesisQuery.query();
 				}
 				visit(auxCtx.getChild(0));
 				System.out.println(line);
@@ -148,7 +166,6 @@ public class Interpreter extends InputParser.TestsBaseVisitor<Void> {
 				}
 				total++;
 			}
-
 
 		}
 		catch(Throwable e){
@@ -262,7 +279,7 @@ public class Interpreter extends InputParser.TestsBaseVisitor<Void> {
 			this.codes.put(var, code);
 		}
 		
-		for (QueryContext query : ctx.queries().query()) {
+		for (Parenthesis_queryContext query : ctx.queries().parenthesis_query()) {
 			visit(query);
 		}
 		}
@@ -276,7 +293,7 @@ public class Interpreter extends InputParser.TestsBaseVisitor<Void> {
 
 	@Override
 	public Void visitQueries(InputParser.TestsParser.QueriesContext ctx) {
-		for (InputParser.TestsParser.QueryContext query : ctx.query()) {
+		for (Parenthesis_queryContext query : ctx.parenthesis_query()) {
 			visit(query);
 		}
 		return null;

@@ -68,7 +68,8 @@ public class TestRunner
 			String test = "";
 			CharStream inputCode = null;
 			Interpreter interpreter = new Interpreter("");
-			System.out.println("Insert test code. Ending char must be ';;'. Press only 'exit;;' to exit.");
+			System.out.println("Welcome in QueryAGT");
+			System.out.println("Enter  your Commands. Ending char is ';;' followed by a newline. Enter the command 'exit' to quit.");
 			while(true){
 				System.out.print("> ");
 				try {
@@ -77,7 +78,6 @@ public class TestRunner
 					inputCode = CharStreams.fromString(scanner.next());
 
 					if(inputCode.toString().strip().equals("exit")) {
-						System.out.println(inputCode.toString().strip());
 						System.out.println("Bye!");
 						return;
 					}

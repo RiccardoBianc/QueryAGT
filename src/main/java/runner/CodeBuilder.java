@@ -4,9 +4,47 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
+import InputParser.TestsBaseVisitor;
+import InputParser.TestsParser.Parenthesis_queryContext;
+import InputParser.TestsParser.Proj_equalityContext;
+import InputParser.TestsParser.Type_participant_parenthesisContext;
+import InputParser.TestsParser.Type_queue_parenthesisContext;
+
 
 public class CodeBuilder extends InputParser.TestsBaseVisitor<String> {
 	
+	@Override
+	public String visitParenthesis_query(Parenthesis_queryContext ctx) {
+		if(ctx.query() != null) {
+			return visit(ctx.query());
+		}
+		return visit(ctx.parenthesis_query());
+	}
+
+	@Override
+	public String visitProj_equality(Proj_equalityContext ctx) {
+		if(ctx.proj_equality() != null) {
+			return visit(ctx.proj_equality());
+		}
+		return visit(ctx.type_participant_parenthesis()) + "@" + visit(ctx.parenthesis_process());
+	}
+
+	@Override
+	public String visitType_participant_parenthesis(Type_participant_parenthesisContext ctx) {
+		if(ctx.type_participant_parenthesis() != null) {
+			return visit(ctx.type_participant_parenthesis());
+		}
+		return visit(ctx.parenthesis_type()) + "@" + visit(ctx.participant());
+	}
+
+	@Override
+	public String visitType_queue_parenthesis(Type_queue_parenthesisContext ctx) {
+		if(ctx.type_queue_parenthesis() != null) {
+			return visit(ctx.type_queue_parenthesis());
+		}
+		return visit(ctx.parenthesis_type()) + "@" + visit(ctx.parenthesis_queue());
+	}
+
 	@Override
 	public String visitParenthesis_session(InputParser.TestsParser.Parenthesis_sessionContext ctx) {
 		if(ctx.session()!=null) {
@@ -43,9 +81,10 @@ public class CodeBuilder extends InputParser.TestsBaseVisitor<String> {
 	public String visitQuery(InputParser.TestsParser.QueryContext ctx) {
 		String not = "";
 		if(ctx.NOT() != null) {
-			not = "\\+";			
+			not = "\\+";
+			return not + "(" + visit(ctx.parenthesis_query())+")";	
 		}
-		return not + visitChildren(ctx);	
+		return visitChildren(ctx);	
 	}
 	
 	
@@ -111,9 +150,8 @@ public class CodeBuilder extends InputParser.TestsBaseVisitor<String> {
 	@Override 
 	public String visitWell_formdness(InputParser.TestsParser.Well_formdnessContext ctx) { 
 		try {
-			String type = visit(ctx.parenthesis_type());
-			String queue = visit(ctx.parenthesis_queue());
-			return "well_formdness("+ type + "," + queue + ")";
+			String type_queue = visit(ctx.type_queue_parenthesis());
+			return "well_formdness("+ type_queue.split("@")[0] + "," + type_queue.split("@")[1] + ")";
 			}
 			catch (Error e) {
 				throw new QueryAGTException("Type error in query");
@@ -134,9 +172,8 @@ public class CodeBuilder extends InputParser.TestsBaseVisitor<String> {
 	@Override
 	public String visitIom(InputParser.TestsParser.IomContext ctx) {
 		try {
-			String type = visit(ctx.parenthesis_type());
-			String queue = visit(ctx.parenthesis_queue());
-			return "io_match("+ type + "," + queue + ")";
+			String type_queue = visit(ctx.type_queue_parenthesis());
+			return "io_match("+ type_queue.split("@")[0] + "," + type_queue.split("@")[1] + ")";
 			}
 			catch (Error e) {
 				throw new QueryAGTException("Type error in query");
@@ -158,9 +195,8 @@ public class CodeBuilder extends InputParser.TestsBaseVisitor<String> {
 	public String visitTyping(InputParser.TestsParser.TypingContext ctx) { 
 		try {
 			String network = visit(ctx.parenthesis_session());
-			String type = visit(ctx.parenthesis_type());
-			String queue = visit(ctx.parenthesis_queue());
-			String res = "typing("+ network + "," + type + "-" + queue + ")";
+			String type_queue = visit(ctx.type_queue_parenthesis());
+			String res = "typing("+ network + "," + type_queue.split("@")[0] + "-" + type_queue.split("@")[1] + ")";
 			return res;
 			}
 			catch (Error e) {
@@ -172,9 +208,8 @@ public class CodeBuilder extends InputParser.TestsBaseVisitor<String> {
 	@Override
 	public String visitProjection_exists(InputParser.TestsParser.Projection_existsContext ctx) {
 		try {
-			String type = visit(ctx.parenthesis_type());
-			String participant = visit(ctx.participant());
-			String res = "projection("+ type + "," + participant + ",_),!";
+			String type_participant = visit(ctx.type_participant_parenthesis());
+			String res = "projection("+ type_participant.split("@")[0] + "," + type_participant.split("@")[1] + ",_),!";
 			return res;
 			}
 			catch (Error e) {
@@ -185,10 +220,8 @@ public class CodeBuilder extends InputParser.TestsBaseVisitor<String> {
 	@Override 
 	public String visitProjection_assert(InputParser.TestsParser.Projection_assertContext ctx) {
 		try {
-		String type = visit(ctx.parenthesis_type());
-		String participant = visit(ctx.participant());
-		String process = visit(ctx.parenthesis_process());
-		String res = "projection("+ type + "," + participant + "," + process + "),!";
+		String proj = visit(ctx.proj_equality());
+		String res = "projection("+ proj.split("@")[0] + "," + proj.split("@")[1] + "," + proj.split("@")[2] + "),!";
 		return res;
 		}
 		catch (Error e) {

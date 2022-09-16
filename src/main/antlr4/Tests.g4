@@ -7,7 +7,7 @@ grammar Tests;
 interactive
 	:
 	let
-	| query
+	| parenthesis_query
 	;
 
 let
@@ -45,7 +45,13 @@ test
 	;
 
 queries
-	: query (query)*
+	: parenthesis_query (parenthesis_query)*
+	;
+
+parenthesis_query
+	:
+	'(' parenthesis_query ')'
+	| query
 	;
 
 query
@@ -56,7 +62,7 @@ query
 	| boundness
 	| iom
 	| all_proj_exists
-	| NOT query	
+	| NOT parenthesis_query	
 	;
 	
 all_proj_exists:
@@ -68,7 +74,8 @@ ALL_PROJ_EXISTS:
 	;
 	
 iom:
-	IOM parenthesis_type '|' parenthesis_queue;
+	IOM type_queue_parenthesis
+	;
 
 IOM:
 	'io-match';
@@ -82,11 +89,23 @@ BOUND:
 	;
 
 projection_assert 
-	: PROJ '('	parenthesis_type ',' participant  ')' '==' parenthesis_process
+	: PROJ proj_equality
+	;
+
+proj_equality
+	:
+	'(' proj_equality ')'
+	| type_participant_parenthesis '==' parenthesis_process
 	;
 
 projection_exists
-	:   EXISTS_PROJ '('	parenthesis_type ',' participant  ')'
+	:   EXISTS_PROJ type_participant_parenthesis
+	;
+
+type_participant_parenthesis
+	:
+	  '('	type_participant_parenthesis  ')'
+	| '('	parenthesis_type ',' participant  ')'
 	;
 
 ON
@@ -112,12 +131,18 @@ EXISTS_PROJ
 	
 well_formdness
 	:
-	WELL_FORMED parenthesis_type '|' parenthesis_queue
+	WELL_FORMED type_queue_parenthesis
 	;
 	
 typing
 	:
-	 parenthesis_session HAS TYPE parenthesis_type '|' parenthesis_queue
+	 parenthesis_session HAS TYPE type_queue_parenthesis
+	;
+	
+type_queue_parenthesis
+	:
+	  '(' type_queue_parenthesis ')'
+	| parenthesis_type '|' parenthesis_queue
 	;
 
 declaration
