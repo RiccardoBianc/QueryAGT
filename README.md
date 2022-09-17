@@ -20,7 +20,7 @@ To pull the container the command is
 
 
 
-To execute the tool in inteactive mode
+To execute the tool in inteactive mode run 
 
 
 
@@ -28,7 +28,7 @@ To execute the tool in inteactive mode
 
 
 
-To execute the tool in batch mode
+To execute the tool in batch mode run
 
 
 
@@ -36,7 +36,7 @@ To execute the tool in batch mode
 
 
 
-The result file will be saved in the same folder of the input file.
+The result file will be saved in the same directory of the input file.
 
 ## Building from sources 
 ### Prerequisites for installation
@@ -64,12 +64,13 @@ Then run
 
 There are two execution modes: the interactive one and the batch one. 
 If no argument is provided, then the tool starts in interactive mode.
-otherwise, the tool executes the code from the input file (first argument) and writes the output to the output file (second argument or standard output if not specified). 
+Otherwise, the tool executes the code from the input file (first argument) and writes the output to the output file (second argument or standard output if not specified). 
 
 ## Interactive mode
-In interactive mode you have two possible commands: variable declaration and query execution. The tool accept only one command at a time. At the end of the command you have to add ```;;``` as terminator to execute it. 
+You can enter two kinds of commands: variable declarations and queries. 
+To terminate ad execute a command, you have to type ```;;``` followed by a newline (therefore you can run one command at a time). 
 
-The syntax of a declaration  command is the following: 
+The syntax of a declaration command is the following: 
 
 
 
@@ -81,7 +82,7 @@ The syntax of a declaration  command is the following:
 
 
 Each declaration begins with a keyword for the kind of declared entity: `Process` for processes, `GlobalType` for global types, `Queue` for queues, and `Session` for sessions.
-Declarations inside a `let` block can be mutually recursive, to handle possibly non-terminating protocols. When a variable is declared in a let command the association is saved in a global environment and can be used until a new declaration, that must preserve the type. For instance, a variable declared as `Process`, can de redefined only as `Process`.
+Declarations inside a `let` block can be mutually recursive, to handle possibly non-terminating protocols. When a variable is declared in a let command, the association is saved in a global environment and can be used until a new declaration for the same variable, that must preserve its type, is provided. For instance, a variable declared as `Process`, can de redefined only as `Process`.
 All declared variables are in the global scope. 
 
 Queries correspond to judgments described in the papers. In particular:
@@ -101,16 +102,16 @@ it is written with syntax:
     query ;; 
 
 
-The tool performs a rudimentary typechecking, verifying that all used variables are declared with the correct kind,  e.g., rejecting a declaration block or a query where a process variable is used where a queue is expected. 
+The tool performs a rudimentary typechecking, verifying that all used variables are declared with the correct type,  e.g., rejecting a declaration block or a query where a process variable is used where a queue is expected. 
 
 To terminate the interactive session write 
 
 
     exit ;; 
 
-## Tutorial for the interactive mode
+### An Example Interaction 
 
-The first command declares G1 and G2 as global types and P, P1 and Q as processes. The syntax for entities is analogous to the syntax in [1].
+First we declare G1 and G2 as global types and P, P1 and Q as processes, by typing  
 
 
 
@@ -127,7 +128,8 @@ The first command declares G1 and G2 as global types and P, P1 and Q as processe
     
     
     
-Then, we can execute the following command, that declares Q1 as a process, M as a queue and S as session. 
+Note that the syntax for entities is analogous to the syntax in [1].  
+Then, we declare Q1 as a process, M as a queue and S as session by typing 
 
 
 
@@ -142,19 +144,44 @@ Then, we can execute the following command, that declares Q1 as a process, M as 
 The session S consists of two participants p and q, executing processes P and Q, respectively. 
 Note that this declaration uses variables introduced by the previous one (P and Q). 
 
-After declaring entities, one can ask queries to the tool. 
-For instance, we can check whether Q is the process implementing the behaviour of the participant q in the global type G1, writing the command 
+After declaring entities, we can ask queries to the tool.  
+For instance, we can write 
 
 
     proj(G1,q) ==  Q ;; 
     
     
+to check whether Q is the process implementing the behaviour of the participant q in the global type G1. 
+The tool then prints
     
-or we can also check whether the session `p[P1] | q[Q1] | M` complies with the global type `p>q?l; q>p?m1; G1` with queue M 
-
+    
+    Query proj (G1,q)==Q PASSED
+    
+    
+Then, we can also write 
 
 
     p[P1] | q[Q1] | M has type (p>q?l; q>p?m1; G1) | M ;;
+
+
+to check whether the session `p[P1] | q[Q1] | M` complies with the global type `p>q?l; q>p?m1; G1` with queue M. 
+The tool then prints
+
+
+    Query p[P1]|q[Q1]|M has type (p>q?l;q>p?m1;G1)|M PASSED
+
+
+Finally, we can write 
+
+
+    io-match (G2 | Empty) ;; 
+
+
+to check whether the global type `G2` with the empty queue is io-matching (see [1] for details).
+This the query fails and the tool prints 
+
+
+    Query io-match (G2|Empty) NOT PASSED 
 
 
 
