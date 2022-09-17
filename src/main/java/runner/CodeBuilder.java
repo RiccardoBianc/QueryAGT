@@ -82,7 +82,11 @@ public class CodeBuilder extends InputParser.TestsBaseVisitor<String> {
 		String not = "";
 		if(ctx.NOT() != null) {
 			not = "\\+";
-			return not + "(" + visit(ctx.parenthesis_query())+")";	
+			String query =  visit(ctx.parenthesis_query());
+			if(query.charAt(query.length()-1) == '!') {
+			return not + "(" + query.substring(0, query.length()-2) +"),!";
+			}
+			return not + "(" + query + ")";
 		}
 		return visitChildren(ctx);	
 	}
